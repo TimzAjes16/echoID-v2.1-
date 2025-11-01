@@ -115,17 +115,17 @@ async function seedTestUsers(pool) {
     {
       handle: 'sarah',
       walletAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
-      devicePubKey: 'dGVzdF9kZXZpY2VfcHVia2V5X3NhcmFo',
+      devicePubKey: 'N8Ayuv1NP2FtDchQnr/wszNXPd9tJlbpE3r4ye6l/kU=',
     },
     {
       handle: 'mike',
       walletAddress: '0x8ba1f109551bD432803012645Hac136c808C817',
-      devicePubKey: 'dGVzdF9kZXZpY2VfcHVia2V5X21pa2U=',
+      devicePubKey: 'WukkTos1tmQTwHO2LDYc/KILh/0M7N1wzxX1wycxzzE=',
     },
     {
       handle: 'katie',
       walletAddress: '0x9cA7a3B8F2D4e1F6a5B9C8D7E4F3A2B1C0D9E8F7',
-      devicePubKey: 'dGVzdF9kZXZpY2VfcHVia2V5X2thdGll',
+      devicePubKey: '4NNBWBq43Th23FCXuZgbN2Snjk7C+vRbnL5rWYqkREo=',
     },
   ];
 
