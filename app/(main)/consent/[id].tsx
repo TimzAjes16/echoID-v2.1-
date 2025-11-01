@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useStore } from '../../../state/useStore';
 import UnlockBar from '../../../components/UnlockBar';
 import ChatScreen from '../../../components/ChatScreen';
+import { getUnreadCount } from '../../../lib/chatNotifications';
 import { Ionicons } from '@expo/vector-icons';
 import { getThemeColors } from '../../../lib/theme';
 import { useColorScheme } from 'react-native';
@@ -11,15 +12,27 @@ import dayjs from 'dayjs';
 
 export default function ConsentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getConsent, themeMode } = useStore();
+  const { getConsent, themeMode, wallet } = useStore();
   const systemColorScheme = useColorScheme();
   const colors = getThemeColors(themeMode, systemColorScheme);
   const [consent, setConsent] = useState(getConsent(id));
   const [chatVisible, setChatVisible] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     setConsent(getConsent(id));
   }, [id]);
+
+  useEffect(() => {
+    async function loadUnreadCount() {
+      if (!wallet.address || !consent) return;
+      const count = await getUnreadCount(consent.id, wallet.address);
+      setUnreadCount(count);
+    }
+    loadUnreadCount();
+    const interval = setInterval(loadUnreadCount, 5000);
+    return () => clearInterval(interval);
+  }, [wallet.address, consent?.id]);
 
   if (!consent) {
     return (
@@ -100,6 +113,11 @@ export default function ConsentDetailScreen() {
           <View style={styles.chatButtonContent}>
             <Ionicons name="chatbubbles" size={20} color="#fff" />
             <Text style={styles.chatButtonText}>Open Chat</Text>
+            {unreadCount > 0 && (
+              <View style={styles.chatBadge}>
+                <Text style={styles.chatBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+              </View>
+            )}
           </View>
           <Text style={styles.chatButtonSubtext}>
             End-to-end encrypted messaging with {counterpartyName}
@@ -212,6 +230,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
+  },
+  chatBadge: {
+    backgroundColor: '#FF3B30',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 6,
+    marginLeft: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chatBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
   },
   chatButtonSubtext: {
     color: 'rgba(255, 255, 255, 0.8)',
