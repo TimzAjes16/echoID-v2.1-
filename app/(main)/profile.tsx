@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useStore } from '../../state/useStore';
 import QRCodeView from '../../components/QRCodeView';
 import QRScanner from '../../components/QRScanner';
@@ -7,6 +8,8 @@ import { claimHandle, resolveHandle, getSignatureChallenge, verifyHandleSignatur
 import { signMessage } from '../../lib/walletconnect';
 import { getDeviceKeypair } from '../../lib/crypto';
 import { getWalletBalance } from '../../lib/sdk';
+import { getETHPrice, convertETHToUSD } from '../../lib/payment';
+import AddFundsModal from '../../components/AddFundsModal';
 import type { Address } from 'viem';
 
 export default function ProfileScreen() {
@@ -16,6 +19,9 @@ export default function ProfileScreen() {
   const [isClaiming, setIsClaiming] = useState(false);
   const [balance, setBalance] = useState<string | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+  const [balanceUSD, setBalanceUSD] = useState<number | null>(null);
+  const [showAddFunds, setShowAddFunds] = useState(false);
+  const [balanceDisplayMode, setBalanceDisplayMode] = useState<'ETH' | 'USD'>('ETH');
 
   useEffect(() => {
     loadProfile();
@@ -39,9 +45,19 @@ export default function ProfileScreen() {
         wallet.chainId || 8453
       );
       setBalance(balanceWei);
+      
+      // Also fetch USD conversion
+      try {
+        const ethPrice = await getETHPrice();
+        const balanceNum = parseFloat(balanceWei);
+        setBalanceUSD(balanceNum * ethPrice);
+      } catch (error) {
+        console.error('Failed to fetch USD conversion:', error);
+      }
     } catch (error: any) {
       console.error('Failed to load wallet balance:', error);
       setBalance(null);
+      setBalanceUSD(null);
     } finally {
       setIsLoadingBalance(false);
     }
@@ -148,25 +164,60 @@ export default function ProfileScreen() {
         <Text style={styles.sectionTitle}>My Wallet</Text>
         <View style={styles.walletCard}>
           <View style={styles.balanceSection}>
-            <Text style={styles.balanceLabel}>Balance</Text>
+            <View style={styles.balanceHeader}>
+              <Text style={styles.balanceLabel}>Balance</Text>
+              <TouchableOpacity
+                style={styles.balanceToggle}
+                onPress={() => setBalanceDisplayMode(balanceDisplayMode === 'ETH' ? 'USD' : 'ETH')}
+              >
+                <Text style={styles.balanceToggleText}>
+                  {balanceDisplayMode === 'ETH' ? 'USD' : 'ETH'}
+                </Text>
+              </TouchableOpacity>
+            </View>
             {isLoadingBalance ? (
               <ActivityIndicator size="small" color="#007AFF" style={{ marginVertical: 8 }} />
             ) : balance !== null ? (
-              <Text style={styles.balanceValue}>
-                {parseFloat(balance).toFixed(4)} ETH
-              </Text>
+              <>
+                <Text style={styles.balanceValue}>
+                  {balanceDisplayMode === 'ETH'
+                    ? `${parseFloat(balance).toFixed(4)} ETH`
+                    : balanceUSD !== null
+                    ? `$${balanceUSD.toFixed(2)}`
+                    : 'Calculating...'}
+                </Text>
+                {balanceDisplayMode === 'USD' && balanceUSD !== null && (
+                  <Text style={styles.balanceSubtext}>
+                    ≈ {parseFloat(balance).toFixed(6)} ETH
+                  </Text>
+                )}
+                {balanceDisplayMode === 'ETH' && balanceUSD !== null && (
+                  <Text style={styles.balanceSubtext}>
+                    ≈ ${balanceUSD.toFixed(2)} USD
+                  </Text>
+                )}
+              </>
             ) : (
               <Text style={styles.balanceError}>Unable to load</Text>
             )}
-            <TouchableOpacity 
-              style={styles.refreshButton}
-              onPress={loadWalletBalance}
-              disabled={isLoadingBalance}
-            >
-              <Text style={styles.refreshButtonText}>
-                {isLoadingBalance ? 'Loading...' : 'Refresh'}
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.balanceActions}>
+              <TouchableOpacity 
+                style={styles.addFundsButton}
+                onPress={() => setShowAddFunds(true)}
+              >
+                <Ionicons name="add-circle" size={18} color="#fff" style={{ marginRight: 6 }} />
+                <Text style={styles.addFundsButtonText}>Add Funds</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.refreshButton}
+                onPress={loadWalletBalance}
+                disabled={isLoadingBalance}
+              >
+                <Text style={styles.refreshButtonText}>
+                  {isLoadingBalance ? 'Loading...' : 'Refresh'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.walletInfo}>
@@ -198,6 +249,19 @@ export default function ProfileScreen() {
           onCancel={() => setShowQRScanner(false)}
         />
       )}
+
+      <AddFundsModal
+        visible={showAddFunds}
+        onClose={() => setShowAddFunds(false)}
+        walletAddress={wallet.address || ''}
+        network={wallet.chainId === 8453 ? 'base' : wallet.chainId === 84532 ? 'base-sepolia' : 'base'}
+        onPaymentComplete={() => {
+          // Reload balance after payment
+          setTimeout(() => {
+            loadWalletBalance();
+          }, 3000); // Wait a bit for transaction to propagate
+        }}
+      />
     </ScrollView>
   );
 }
@@ -268,25 +332,66 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0F2FE',
   },
+  balanceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 8,
+  },
   balanceLabel: {
     fontSize: 13,
     color: '#666',
-    marginBottom: 8,
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  balanceToggle: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    backgroundColor: '#007AFF',
+    borderRadius: 6,
+  },
+  balanceToggleText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   balanceValue: {
     fontSize: 32,
     fontWeight: '700',
     color: '#007AFF',
-    marginBottom: 12,
+    marginBottom: 4,
     letterSpacing: -0.5,
+  },
+  balanceSubtext: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
   },
   balanceError: {
     fontSize: 14,
     color: '#F44336',
     marginBottom: 12,
+  },
+  balanceActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+    justifyContent: 'center',
+  },
+  addFundsButton: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  addFundsButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
   },
   refreshButton: {
     backgroundColor: '#007AFF',
