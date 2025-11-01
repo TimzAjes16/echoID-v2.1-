@@ -67,15 +67,19 @@ export async function createConsentRequest(
       }
 
       console.log(`[API] Consent request sent to @${counterpartyHandle} via backend`);
+      
+      // Backend will send push notification and store request
+      // When notification is received, fetch request from backend using requestId
     } catch (error: any) {
       console.error('[API] Failed to send consent request:', error.message);
       
       // Fallback: Only send notification and add request if counterparty is currently logged in
       const counterpartyProfile = useStore.getState().profile;
       if (counterpartyProfile.handle?.toLowerCase() === counterpartyHandle.toLowerCase()) {
-        // Only send notification to the actual recipient
-        await sendConsentRequestNotification(request);
+        // Store the full request FIRST, then send notification
+        // This ensures the full request is available when notification is received
         useStore.getState().addConsentRequest(request);
+        await sendConsentRequestNotification(request);
         console.log(`[FALLBACK] Consent request added for logged-in user @${counterpartyHandle}`);
       } else {
         console.log(`[FALLBACK] Backend unavailable, counterparty @${counterpartyHandle} not logged in`);
@@ -89,18 +93,27 @@ export async function createConsentRequest(
     const currentHandle = currentProfile.handle?.toLowerCase();
     const targetHandle = counterpartyHandle.toLowerCase();
     
-    // Send notification to the correct user
-    await sendConsentRequestNotification(request);
-    
-    // If the target handle matches current user's handle, add the request
+    // IMPORTANT: Store the full request FIRST before sending notification
+    // This ensures when notification listener receives the notification,
+    // it can find the full request data in the store
     if (currentHandle === targetHandle) {
+      // User is logged in with target handle - add request to their store
       useStore.getState().addConsentRequest(request);
-      console.log(`[MOCK] Consent request added for logged-in user @${targetHandle}`);
+      console.log(`[MOCK] Full consent request stored for @${targetHandle}`);
+      
+      // Then send notification
+      await sendConsentRequestNotification(request);
+      console.log(`[MOCK] Consent request notification sent to @${targetHandle}`);
     } else if (isTestUser(counterpartyHandle)) {
-      // For test users in mock mode, we still store locally but they won't see it
-      // unless they're logged in with that handle
-      console.log(`[MOCK] Consent request created for test user @${targetHandle} (user must be logged in to see it)`);
+      // For test users in mock mode, store request but only notify if they're logged in
+      // Store it anyway so if they log in later, we can sync
+      useStore.getState().addConsentRequest(request);
+      await sendConsentRequestNotification(request);
+      console.log(`[MOCK] Consent request stored for test user @${targetHandle} (may need to log in to see it)`);
     } else {
+      // Store request locally even if user not logged in (for future sync)
+      useStore.getState().addConsentRequest(request);
+      await sendConsentRequestNotification(request);
       console.log(`[MOCK] Backend not configured, request stored locally for @${targetHandle}`);
     }
   }

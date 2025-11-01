@@ -92,12 +92,31 @@ export async function getNotificationToken(): Promise<string | null> {
 export function setupNotificationListener(
   onConsentRequest: (request: ConsentRequest) => void
 ): Notifications.Subscription {
-  return Notifications.addNotificationReceivedListener((notification) => {
+  return Notifications.addNotificationReceivedListener(async (notification) => {
     const data = notification.request.content.data;
     if (data?.type === 'consent_request' && data.requestId) {
-      // In a real app, fetch the full request data from backend
-      // For now, we'll handle it via local storage
-      onConsentRequest(data as any);
+      // The notification data only contains requestId, we need to fetch the full request
+      // In production, this would fetch from backend API
+      // For MVP/mock mode, we need to retrieve from a local store/cache
+      
+      try {
+        // Try to get the full request from the Zustand store
+        // This works because requests are stored locally when created
+        const { useStore } = await import('../state/useStore');
+        const fullRequest = useStore.getState().getConsentRequest(data.requestId);
+        
+        if (fullRequest) {
+          // Full request already in store, trigger callback
+          onConsentRequest(fullRequest);
+        } else {
+          // Request not in store yet, might need to fetch from backend
+          // For now, log and wait for it to be added directly
+          console.warn(`[Notification] Received notification for request ${data.requestId}, but request not yet in store`);
+          // Don't add incomplete data to store
+        }
+      } catch (error) {
+        console.error('[Notification] Failed to handle consent request notification:', error);
+      }
     }
   });
 }
