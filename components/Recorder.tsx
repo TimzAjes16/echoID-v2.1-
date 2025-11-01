@@ -97,8 +97,22 @@ export default function Recorder({ onRecordingComplete, template }: RecorderProp
       // Enhanced audio analysis with AI-based features
       const duration = await getAudioDuration(uri);
       const analysis = await analyzeAudioFeatures(uri, duration);
-
-      onRecordingComplete(audioBytes, analysis);
+      
+      // Analyze coercion and show result
+      const coercionLevel = analyzeCoercion(analysis);
+      const { getCoercionLabel, getCoercionColor } = await import('../lib/coercion');
+      
+      // Show analysis result to user
+      if (coercionLevel > 0) {
+        Alert.alert(
+          'Coercion Analysis',
+          `Detection level: ${getCoercionLabel(coercionLevel)}\n\n${coercionLevel === 2 ? '⚠️ High risk indicators detected. Please ensure consent is voluntary.' : '⚠️ Some indicators detected. Please confirm this is your free will.'}`,
+          [{ text: 'Continue', onPress: () => onRecordingComplete(audioBytes, analysis) }]
+        );
+      } else {
+        // Green level - proceed normally
+        onRecordingComplete(audioBytes, analysis);
+      }
     } catch (error) {
       console.error('Failed to process recording:', error);
       Alert.alert('Error', 'Failed to process recording');
