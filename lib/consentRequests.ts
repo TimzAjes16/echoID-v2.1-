@@ -159,6 +159,32 @@ export async function acceptConsentRequest(request: ConsentRequest): Promise<Con
   // The acceptor needs to do their own verification in a real flow
   // For now, we'll create the consent on-chain with the requester's data
 
+  // Check balance before attempting transaction
+  try {
+    const { getWalletBalance } = await import('./sdk');
+    const balance = await getWalletBalance(
+      wallet.address as any,
+      wallet.chainId || 8453
+    );
+    const balanceEth = parseFloat(balance);
+    const feeEth = parseFloat(config.protocolFeeWei) / 1e18;
+    const estimatedGasEth = 0.002; // Conservative estimate
+    const totalRequired = feeEth + estimatedGasEth;
+
+    if (balanceEth < totalRequired) {
+      throw new Error(
+        `Insufficient balance. Required: ${totalRequired.toFixed(4)} ETH (fee: ${feeEth.toFixed(4)} ETH + gas: ~${estimatedGasEth.toFixed(4)} ETH), Available: ${balanceEth.toFixed(4)} ETH`
+      );
+    }
+  } catch (error: any) {
+    // If it's already our custom error, re-throw it
+    if (error.message && error.message.includes('Insufficient balance')) {
+      throw error;
+    }
+    // Otherwise, log warning but continue (balance check might fail on testnets)
+    console.warn('Balance check failed, proceeding anyway:', error);
+  }
+
   // Create consent on-chain
   const { createConsent, UnlockMode } = await import('./sdk');
   const consentId = await createConsent(

@@ -30,16 +30,47 @@ export default function ConsentRequestsScreen() {
         hasConsentData: !!request.consentData,
       });
 
-      // Show payment confirmation before proceeding
-      const { formatFee } = await import('../../lib/sdk');
+      // Check wallet balance before proceeding
+      const { formatFee, getWalletBalance } = await import('../../lib/sdk');
       const feeAmount = config?.protocolFeeWei 
         ? formatFee(config.protocolFeeWei, config.defaultChainId || 8453)
         : '0.001 ETH';
       
+      // Get current balance
+      let currentBalance: string | null = null;
+      try {
+        currentBalance = await getWalletBalance(
+          wallet.address as any,
+          wallet.chainId || 8453
+        );
+      } catch (error) {
+        console.error('Failed to fetch balance:', error);
+      }
+
+      // Estimate total cost (protocol fee + gas)
+      // Gas estimate: ~200k gas * ~0.00001 ETH per gas = ~0.002 ETH
+      // Plus protocol fee of 0.001 ETH = ~0.003 ETH total
+      const protocolFeeEth = parseFloat(config?.protocolFeeWei ? formatFee(config.protocolFeeWei, config.defaultChainId || 8453).split(' ')[0] : '0.001');
+      const estimatedGasEth = 0.002; // Conservative estimate
+      const totalRequiredEth = protocolFeeEth + estimatedGasEth;
+      const currentBalanceEth = currentBalance ? parseFloat(currentBalance) : 0;
+
+      // Check if balance is sufficient
+      if (currentBalanceEth < totalRequiredEth) {
+        Alert.alert(
+          'Insufficient Balance',
+          `You need at least ${totalRequiredEth.toFixed(4)} ETH to complete this transaction:\n\n• Protocol fee: ${protocolFeeEth.toFixed(4)} ETH\n• Estimated gas: ${estimatedGasEth.toFixed(4)} ETH\n\nYour current balance: ${currentBalanceEth.toFixed(4)} ETH\n\nPlease add funds to your wallet.`,
+          [{ text: 'OK' }]
+        );
+        setProcessing(null);
+        return;
+      }
+
+      // Show payment confirmation before proceeding
       const confirmed = await new Promise<boolean>((resolve) => {
         Alert.alert(
           'Accept Consent Request',
-          `Accepting this consent request will:\n\n• Create consent on-chain\n• Mint your consent badge (NFT)\n• Pay protocol fee: ${feeAmount}\n\nContinue?`,
+          `Accepting this consent request will:\n\n• Create consent on-chain\n• Mint your consent badge (NFT)\n• Pay protocol fee: ${feeAmount}\n• Estimated gas: ~${estimatedGasEth.toFixed(4)} ETH\n\nTotal cost: ~${totalRequiredEth.toFixed(4)} ETH\nYour balance: ${currentBalanceEth.toFixed(4)} ETH\n\nContinue?`,
           [
             {
               text: 'Cancel',

@@ -203,6 +203,40 @@ export async function createConsent(
 
   let txHash: string;
 
+  // Validate factory address
+  if (FACTORY_ADDRESS === '0x0000000000000000000000000000000000000000') {
+    throw new Error('Factory contract address not configured. Please set EXPO_PUBLIC_FACTORY_ADDRESS environment variable.');
+  }
+
+  // Check balance before sending transaction
+  const publicClient = getPublicClient(chainId);
+  try {
+    const balance = await publicClient.getBalance({ address: from });
+    const feeWeiBigInt = BigInt(feeWei);
+    // Estimate gas (conservative: 300k gas * 20 gwei = 0.006 ETH)
+    const estimatedGas = BigInt(300000);
+    const gasPrice = await publicClient.getGasPrice();
+    const estimatedGasCost = estimatedGas * gasPrice;
+    const totalRequired = feeWeiBigInt + estimatedGasCost;
+
+    if (balance < totalRequired) {
+      const balanceEth = formatEther(balance);
+      const requiredEth = formatEther(totalRequired);
+      const feeEth = formatEther(feeWeiBigInt);
+      const gasEth = formatEther(estimatedGasCost);
+      throw new Error(
+        `Insufficient balance. Required: ${parseFloat(requiredEth).toFixed(4)} ETH (fee: ${parseFloat(feeEth).toFixed(4)} ETH + gas: ~${parseFloat(gasEth).toFixed(4)} ETH), Available: ${parseFloat(balanceEth).toFixed(4)} ETH`
+      );
+    }
+  } catch (error: any) {
+    // If it's our custom balance error, re-throw it
+    if (error.message && error.message.includes('Insufficient balance')) {
+      throw error;
+    }
+    // Otherwise, log but continue (gas estimation might fail)
+    console.warn('Balance/gas check failed, proceeding anyway:', error);
+  }
+
   if (wallet.isLocal) {
     // Use local wallet to sign and send transaction
     const localWallet = await getLocalWallet();
@@ -217,19 +251,35 @@ export async function createConsent(
       transport: http(),
     });
 
-    txHash = await walletClient.sendTransaction({
-      to: FACTORY_ADDRESS,
-      value: BigInt(feeWei),
-      data,
-    });
+    try {
+      txHash = await walletClient.sendTransaction({
+        to: FACTORY_ADDRESS,
+        value: BigInt(feeWei),
+        data,
+      });
+    } catch (error: any) {
+      // Improve error messages for common issues
+      if (error.message?.includes('balance') || error.message?.includes('funds')) {
+        throw new Error(`Insufficient balance to complete transaction. Please ensure you have enough ETH to cover the protocol fee (${formatFee(feeWei, chainId)}) and gas costs.`);
+      }
+      throw error;
+    }
   } else if (wallet.session) {
     // Use WalletConnect
-    txHash = await sendTransaction(wallet.session, {
-      from,
-      to: FACTORY_ADDRESS,
-      value: feeWei,
-      data,
-    });
+    try {
+      txHash = await sendTransaction(wallet.session, {
+        from,
+        to: FACTORY_ADDRESS,
+        value: feeWei,
+        data,
+      });
+    } catch (error: any) {
+      // Improve error messages for common issues
+      if (error.message?.includes('balance') || error.message?.includes('funds')) {
+        throw new Error(`Insufficient balance to complete transaction. Please ensure you have enough ETH to cover the protocol fee (${formatFee(feeWei, chainId)}) and gas costs.`);
+      }
+      throw error;
+    }
   } else {
     throw new Error('No wallet available');
   }
