@@ -17,20 +17,29 @@ interface ChatProps {
   consent: Consent;
 }
 
-const db = SQLite.openDatabase('echoid_chat.db');
-
 export default function Chat({ consent }: ChatProps) {
   const { wallet, deviceKeypair } = useStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [sessionKey, setSessionKey] = useState<Uint8Array | null>(null);
+  const [db, setDb] = useState<SQLite.SQLiteDatabase | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
-    initDatabase();
-    loadMessages();
-    initSession();
+    async function setup() {
+      const database = await SQLite.openDatabaseAsync('echoid_chat.db');
+      setDb(database);
+      await initDatabase(database);
+      await initSession();
+    }
+    setup();
   }, []);
+
+  useEffect(() => {
+    if (db && sessionKey) {
+      loadMessages(db);
+    }
+  }, [db, sessionKey]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -38,19 +47,17 @@ export default function Chat({ consent }: ChatProps) {
     }
   }, [messages]);
 
-  function initDatabase() {
-    db.transaction((tx) => {
-      tx.executeSql(
-        `CREATE TABLE IF NOT EXISTS messages (
-          id TEXT PRIMARY KEY,
-          consent_id TEXT NOT NULL,
-          sender TEXT NOT NULL,
-          encrypted_data TEXT NOT NULL,
-          nonce TEXT NOT NULL,
-          timestamp INTEGER NOT NULL
-        )`
+  async function initDatabase(database: SQLite.SQLiteDatabase) {
+    await database.execAsync(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id TEXT PRIMARY KEY,
+        consent_id TEXT NOT NULL,
+        sender TEXT NOT NULL,
+        encrypted_data TEXT NOT NULL,
+        nonce TEXT NOT NULL,
+        timestamp INTEGER NOT NULL
       );
-    });
+    `);
   }
 
   async function initSession() {
@@ -67,49 +74,48 @@ export default function Chat({ consent }: ChatProps) {
     setSessionKey(key);
   }
 
-  async function loadMessages() {
-    db.transaction((tx) => {
-      tx.executeSql(
+  async function loadMessages(database: SQLite.SQLiteDatabase) {
+    if (!database || !sessionKey) return;
+    
+    try {
+      const result = await database.getAllAsync(
         'SELECT * FROM messages WHERE consent_id = ? ORDER BY timestamp ASC',
-        [consent.id],
-        (_, { rows }) => {
-          const loadedMessages: Message[] = [];
-          for (let i = 0; i < rows.length; i++) {
-            const row = rows.item(i);
-            // Decrypt message
-            if (sessionKey) {
-              try {
-                const encryptedData = Uint8Array.from(JSON.parse(row.encrypted_data));
-                const nonce = Uint8Array.from(JSON.parse(row.nonce));
-                const decrypted = decryptBytes(encryptedData, sessionKey, nonce);
-                const text = new TextDecoder().decode(decrypted);
-                loadedMessages.push({
-                  id: row.id,
-                  sender: row.sender,
-                  text,
-                  timestamp: row.timestamp,
-                  encrypted: true,
-                });
-              } catch (error) {
-                console.error('Failed to decrypt message:', error);
-              }
-            }
-          }
-          setMessages(loadedMessages);
-        }
+        [consent.id]
       );
-    });
+      
+      const loadedMessages: Message[] = [];
+      for (const row of result as any[]) {
+        try {
+          const encryptedData = Uint8Array.from(JSON.parse(row.encrypted_data));
+          const nonce = Uint8Array.from(JSON.parse(row.nonce));
+          const decrypted = decryptBytes(encryptedData, sessionKey, nonce);
+          const text = new TextDecoder().decode(decrypted);
+          loadedMessages.push({
+            id: row.id,
+            sender: row.sender,
+            text,
+            timestamp: row.timestamp,
+            encrypted: true,
+          });
+        } catch (error) {
+          console.error('Failed to decrypt message:', error);
+        }
+      }
+      setMessages(loadedMessages);
+    } catch (error) {
+      console.error('Failed to load messages:', error);
+    }
   }
 
   async function sendMessage() {
-    if (!inputText.trim() || !sessionKey || !wallet.address) return;
+    if (!inputText.trim() || !sessionKey || !wallet.address || !db) return;
 
-    const messageId = `${Date.now()}-${Math.random()}`;
-    const textBytes = new TextEncoder().encode(inputText);
-    const { ciphertext, nonce } = encryptBytes(textBytes, sessionKey);
+    try {
+      const messageId = `${Date.now()}-${Math.random()}`;
+      const textBytes = new TextEncoder().encode(inputText);
+      const { ciphertext, nonce } = encryptBytes(textBytes, sessionKey);
 
-    db.transaction((tx) => {
-      tx.executeSql(
+      await db.runAsync(
         'INSERT INTO messages (id, consent_id, sender, encrypted_data, nonce, timestamp) VALUES (?, ?, ?, ?, ?, ?)',
         [
           messageId,
@@ -118,20 +124,21 @@ export default function Chat({ consent }: ChatProps) {
           JSON.stringify(Array.from(ciphertext)),
           JSON.stringify(Array.from(nonce)),
           Date.now(),
-        ],
-        () => {
-          const newMessage: Message = {
-            id: messageId,
-            sender: wallet.address!,
-            text: inputText,
-            timestamp: Date.now(),
-            encrypted: true,
-          };
-          setMessages((prev) => [...prev, newMessage]);
-          setInputText('');
-        }
+        ]
       );
-    });
+
+      const newMessage: Message = {
+        id: messageId,
+        sender: wallet.address,
+        text: inputText,
+        timestamp: Date.now(),
+        encrypted: true,
+      };
+      setMessages((prev) => [...prev, newMessage]);
+      setInputText('');
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
   }
 
   function renderMessage({ item }: { item: Message }) {

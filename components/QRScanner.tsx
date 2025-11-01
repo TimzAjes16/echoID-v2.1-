@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
-import { BarCodeScanner, BarCodeScanResult } from 'expo-barcode-scanner';
+import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
 import { resolveHandle } from '../lib/handles';
 
 interface QRPayload {
@@ -34,7 +33,7 @@ export default function QRScanner({ onScanComplete, onCancel }: QRScannerProps) 
     );
   }
 
-  function handleBarCodeScanned({ type, data }: BarCodeScanResult) {
+  function handleBarCodeScanned({ data }: BarcodeScanningResult) {
     if (scanned) return;
     setScanned(true);
 
@@ -57,8 +56,8 @@ export default function QRScanner({ onScanComplete, onCancel }: QRScannerProps) 
     <View style={styles.container}>
       <CameraView
         style={styles.camera}
-        barCodeScannerSettings={{
-          barCodeTypes: [BarCodeScanner.Constants.BarCodeType.qr],
+        barcodeScannerSettings={{
+          barcodeTypes: ['qr'],
         }}
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
       >
