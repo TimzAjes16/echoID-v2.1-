@@ -220,7 +220,7 @@ import { create } from '@web3-storage/w3up-client'
 EXPO_PUBLIC_API_BASE_URL=https://api.echoid.xyz
 
 # WalletConnect
-EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id
+EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID=412ada4215e831396a0e19005bbd9823
 
 # Smart Contracts
 EXPO_PUBLIC_FACTORY_ADDRESS=0x...

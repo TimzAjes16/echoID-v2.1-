@@ -103,7 +103,7 @@ This document tracks what has been implemented and what still needs to be done t
 
 **Frontend (`.env`):**
 - [ ] `EXPO_PUBLIC_FACTORY_ADDRESS` - Contract address (after deployment)
-- [ ] `EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID` - Get from https://cloud.walletconnect.com
+- [x] `EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID` - Configured ✅ (`412ada4215e831396a0e19005bbd9823`)
 - [x] `EXPO_PUBLIC_EXPO_PROJECT_ID` - Set to `echoid-expogo` ✅
 - [x] `EXPO_TOKEN` - Expo PAT configured ✅
 - [ ] `EXPO_PUBLIC_API_BASE_URL` - Your backend API URL

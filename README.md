@@ -41,7 +41,7 @@ Consent Verification Protocol built for Expo Go (managed workflow).
 
 ## Environment Variables
 
-- `EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID`: Your WalletConnect Cloud project ID
+- `EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID`: WalletConnect Cloud project ID (configured: `412ada4215e831396a0e19005bbd9823`)
 - `EXPO_PUBLIC_FACTORY_ADDRESS`: ConsentFactory contract address
 - `EXPO_PUBLIC_DEFAULT_CHAIN_ID`: Default chain (8453 = Base)
 - `EXPO_PUBLIC_API_BASE_URL`: Backend API URL
