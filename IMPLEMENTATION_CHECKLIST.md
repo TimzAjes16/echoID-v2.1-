@@ -101,13 +101,15 @@ This document tracks what has been implemented and what still needs to be done t
 **Frontend (`.env`):**
 - [ ] `EXPO_PUBLIC_FACTORY_ADDRESS` - Contract address (after deployment)
 - [ ] `EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID` - Get from https://cloud.walletconnect.com
-- [ ] `EXPO_PUBLIC_EXPO_PROJECT_ID` - Get from https://expo.dev
+- [x] `EXPO_PUBLIC_EXPO_PROJECT_ID` - Set to `echoid-expogo` ✅
+- [x] `EXPO_TOKEN` - Expo PAT configured ✅
 - [ ] `EXPO_PUBLIC_API_BASE_URL` - Your backend API URL
 - [ ] `EXPO_PUBLIC_DEFAULT_CHAIN_ID` - 8453 for Base mainnet
 
 **Backend (`backend/.env`):**
 - [ ] `DATABASE_URL` - PostgreSQL connection string
-- [ ] `EXPO_PROJECT_ID` - Same as frontend
+- [x] `EXPO_PROJECT_ID` - Set to `echoid-expogo` ✅
+- [x] `EXPO_TOKEN` - Expo PAT configured ✅
 - [ ] `PORT` - Server port (default: 3000)
 - [ ] `NODE_ENV` - production
 - [ ] `ALLOWED_ORIGINS` - Your app origins
@@ -121,11 +123,17 @@ This document tracks what has been implemented and what still needs to be done t
 - [ ] Set up monitoring/logging
 
 ### 5. Push Notifications Setup
-- [ ] Get Expo Project ID from https://expo.dev
+- [x] Get Expo Project ID from https://expo.dev ✅ (echoid-expogo)
+- [x] Expo PAT configured ✅
 - [ ] Configure APNs (iOS) in Expo dashboard
 - [ ] Configure FCM (Android) in Expo dashboard
 - [ ] Test push notifications between devices
 - [ ] Verify device registration works
+
+**Note:** Expo PAT is configured. You can now:
+- Use `expo publish` or EAS Build with authentication
+- Configure push notifications in Expo dashboard
+- Access Expo services programmatically
 
 ### 6. Testing ⚠️ **IMPORTANT**
 - [ ] Test handle claiming

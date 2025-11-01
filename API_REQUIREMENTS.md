@@ -206,7 +206,8 @@ EXPO_PUBLIC_APPLE_MERCHANT_ID=merchant.com.echoid (for Apple Pay)
 EXPO_PUBLIC_WEB3_STORAGE_TOKEN=your_token (migrate to w3up)
 
 # Push Notifications
-EXPO_PUBLIC_EXPO_PROJECT_ID=your_expo_project_id
+EXPO_PUBLIC_EXPO_PROJECT_ID=echoid-expogo
+EXPO_TOKEN=OLe8Hjc4mzmJ-eB6wVC2RxyjcNIShJRBS1uQUjmn
 
 # Blockchain RPC
 EXPO_PUBLIC_ALCHEMY_API_KEY=your_alchemy_key (optional, for better performance)
@@ -222,11 +223,22 @@ EXPO_PUBLIC_INFURA_PROJECT_ID=your_infura_id (optional)
 - [ ] Database for handles and consent requests
 - [ ] User authentication/authorization
 
-### Phase 2: Push Notifications (Critical)
-- [ ] Set up Expo Push Notification Service
+### Phase 2: Push Notifications (Critical - In Progress)
+- [x] Expo Project ID configured ✅ (`echoid-expogo`)
+- [x] Expo PAT configured ✅
+- [ ] Configure APNs (iOS) in Expo dashboard
+- [ ] Configure FCM (Android) in Expo dashboard
 - [ ] Backend service to send push notifications
 - [ ] Device token registration endpoint
 - [ ] Notification delivery confirmation
+- [ ] Test push notifications between devices
+
+**Next Steps:**
+1. Log in to Expo dashboard (https://expo.dev)
+2. Navigate to project `echoid-expogo`
+3. Configure APNs for iOS (requires Apple Developer account)
+4. Configure FCM for Android
+5. Use Expo PAT to authenticate API calls for push notifications
 
 ### Phase 3: Payment Processing ✅ **COMPLETED**
 - [x] Crypto payments via WalletConnect/local wallet (fully implemented)
