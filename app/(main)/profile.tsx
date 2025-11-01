@@ -7,7 +7,6 @@ import { claimHandle, resolveHandle, getSignatureChallenge, verifyHandleSignatur
 import { signMessage } from '../../lib/walletconnect';
 import { getDeviceKeypair } from '../../lib/crypto';
 import { getWalletBalance } from '../../lib/sdk';
-import { formatEther } from 'viem';
 import type { Address } from 'viem';
 
 export default function ProfileScreen() {
