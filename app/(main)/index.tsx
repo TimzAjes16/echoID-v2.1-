@@ -10,8 +10,11 @@ import { ConsentRequest } from '../../state/useStore';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { consents, consentRequests, loadConfig, loadProfile, loadDeviceKeypair, addConsentRequest } = useStore();
+  const { consents, consentRequests, loadConfig, loadProfile, loadDeviceKeypair, addConsentRequest, themeMode } = useStore();
+  const systemColorScheme = useColorScheme();
+  const colors = getThemeColors(themeMode, systemColorScheme);
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const styles = createStyles(colors);
 
   useEffect(() => {
     loadConfig();
@@ -38,15 +41,16 @@ export default function HomeScreen() {
   }, [consentRequests.length]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.menuButton}
-          onPress={() => setDrawerVisible(true)}
-        >
-          <Ionicons name="menu" size={24} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.title}>My Badges</Text>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
+      <View style={styles.container}>
+        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => setDrawerVisible(true)}
+          >
+            <Ionicons name="menu" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.title, { color: colors.text }]}>My Badges</Text>
         <View style={styles.headerActions}>
           {consentRequests.length > 0 && (
             <TouchableOpacity
@@ -84,24 +88,27 @@ export default function HomeScreen() {
         />
       )}
 
-      <Drawer visible={drawerVisible} onClose={() => setDrawerVisible(false)} />
-    </View>
+        <Drawer visible={drawerVisible} onClose={() => setDrawerVisible(false)} />
+      </View>
+    </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ReturnType<typeof getThemeColors>) {
+  return StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
   },
   menuButton: {
     padding: 8,
@@ -167,12 +174,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 8,
-    color: '#666',
+    color: colors.textSecondary,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#999',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
-});
+  });
+}
 

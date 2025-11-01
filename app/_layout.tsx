@@ -1,9 +1,11 @@
 import { Stack } from 'expo-router';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
 import { useStore } from '../state/useStore';
 import { useColorScheme } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { getThemeColors } from '../lib/theme';
+import { StyleSheet } from 'react-native';
 
 export default function RootLayout() {
   const { themeMode, loadThemeMode } = useStore();
@@ -15,12 +17,24 @@ export default function RootLayout() {
 
   // Determine if dark mode should be active
   const isDark = themeMode === 'dark' || (themeMode === 'auto' && systemColorScheme === 'dark');
+  const colors = getThemeColors(themeMode, systemColorScheme);
 
   return (
     <SafeAreaProvider>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false }} />
+      <SafeAreaView 
+        style={[styles.safeArea, { backgroundColor: colors.background }]} 
+        edges={['top']}
+      >
+        <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
+        <Stack screenOptions={{ headerShown: false }} />
+      </SafeAreaView>
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
+});
 

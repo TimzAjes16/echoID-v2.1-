@@ -35,27 +35,47 @@ export default function Selfie({ onCaptureComplete }: SelfieProps) {
 
     try {
       setIsProcessing(true);
-      const photo = await cameraRef.current.takePictureAsync();
       
-      if (photo?.uri) {
-        setImageUri(photo.uri);
+      // Take picture with quality settings
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.8,
+        base64: false,
+      });
+      
+      if (!photo?.uri) {
+        throw new Error('No photo URI returned from camera');
+      }
+
+      // Set preview image immediately
+      setImageUri(photo.uri);
+      
+      // Read image as bytes
+      try {
+        // Check if file exists
+        const fileInfo = await FileSystem.getInfoAsync(photo.uri);
+        if (!fileInfo.exists) {
+          throw new Error('Photo file does not exist');
+        }
+
+        // Read as base64
+        const base64 = await FileSystem.readAsStringAsync(photo.uri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
         
-        // Read image as bytes
-        try {
-          // Read as base64
-          const base64 = await FileSystem.readAsStringAsync(photo.uri, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
+        if (!base64) {
+          throw new Error('Failed to read image data');
+        }
+        
+        // Convert base64 to Uint8Array (React Native compatible)
+        // Helper function for base64 to Uint8Array conversion
+        const base64ToUint8Array = (base64Str: string): Uint8Array => {
+          // Remove data URL prefix if present
+          const cleanBase64 = base64Str.includes(',') ? base64Str.split(',')[1] : base64Str;
           
-          // Convert base64 to Uint8Array (React Native compatible)
-          // Helper function for base64 to Uint8Array conversion
-          const base64ToUint8Array = (base64Str: string): Uint8Array => {
-            // Remove data URL prefix if present
-            const cleanBase64 = base64Str.includes(',') ? base64Str.split(',')[1] : base64Str;
-            
-            // For React Native, we can use a polyfill or manual conversion
-            // Using manual conversion which works in React Native
-            if (typeof atob !== 'undefined') {
+          // For React Native, we can use a polyfill or manual conversion
+          // Using manual conversion which works in React Native
+          if (typeof atob !== 'undefined') {
+            try {
               // atob is available (polyfilled)
               const binaryString = atob(cleanBase64);
               const bytes = new Uint8Array(binaryString.length);
@@ -63,43 +83,53 @@ export default function Selfie({ onCaptureComplete }: SelfieProps) {
                 bytes[i] = binaryString.charCodeAt(i);
               }
               return bytes;
-            } else {
-              // Manual base64 decoding (fallback)
-              const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-              const lookup = new Uint8Array(256);
-              for (let i = 0; i < chars.length; i++) {
-                lookup[chars.charCodeAt(i)] = i;
-              }
-              
-              const bufferLength = cleanBase64.length * 0.75;
-              const bytes = new Uint8Array(bufferLength);
-              
-              let p = 0;
-              for (let i = 0; i < cleanBase64.length; i += 4) {
-                const encoded1 = lookup[cleanBase64.charCodeAt(i)];
-                const encoded2 = lookup[cleanBase64.charCodeAt(i + 1)];
-                const encoded3 = lookup[cleanBase64.charCodeAt(i + 2)];
-                const encoded4 = lookup[cleanBase64.charCodeAt(i + 3)];
-                
-                bytes[p++] = (encoded1 << 2) | (encoded2 >> 4);
-                bytes[p++] = ((encoded2 & 15) << 4) | (encoded3 >> 2);
-                bytes[p++] = ((encoded3 & 3) << 6) | (encoded4 & 63);
-              }
-              
-              return bytes;
+            } catch (e) {
+              // Fall through to manual decoding
             }
-          };
+          }
           
-          const imageBytes = base64ToUint8Array(base64);
-          onCaptureComplete(imageBytes);
-        } catch (readError) {
-          console.error('Failed to read image:', readError);
-          throw new Error('Failed to process captured image');
+          // Manual base64 decoding (fallback)
+          const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+          const lookup = new Uint8Array(256);
+          for (let i = 0; i < chars.length; i++) {
+            lookup[chars.charCodeAt(i)] = i;
+          }
+          
+          const bufferLength = Math.floor(cleanBase64.length * 0.75);
+          const bytes = new Uint8Array(bufferLength);
+          
+          let p = 0;
+          for (let i = 0; i < cleanBase64.length; i += 4) {
+            const encoded1 = lookup[cleanBase64.charCodeAt(i)] || 0;
+            const encoded2 = lookup[cleanBase64.charCodeAt(i + 1)] || 0;
+            const encoded3 = lookup[cleanBase64.charCodeAt(i + 2)] || 0;
+            const encoded4 = lookup[cleanBase64.charCodeAt(i + 3)] || 0;
+            
+            bytes[p++] = (encoded1 << 2) | (encoded2 >> 4);
+            if (i + 2 < cleanBase64.length) {
+              bytes[p++] = ((encoded2 & 15) << 4) | (encoded3 >> 2);
+            }
+            if (i + 3 < cleanBase64.length) {
+              bytes[p++] = ((encoded3 & 3) << 6) | (encoded4 & 63);
+            }
+          }
+          
+          return bytes.slice(0, p);
+        };
+        
+        const imageBytes = base64ToUint8Array(base64);
+        if (imageBytes.length === 0) {
+          throw new Error('Image data is empty');
         }
+        onCaptureComplete(imageBytes);
+      } catch (readError: any) {
+        console.error('Failed to read image:', readError);
+        throw new Error(`Failed to process captured image: ${readError.message || readError}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to take picture:', error);
-      Alert.alert('Error', 'Failed to capture photo');
+      Alert.alert('Error', error.message || 'Failed to capture photo');
+      setImageUri(null); // Reset preview on error
     } finally {
       setIsProcessing(false);
     }

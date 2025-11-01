@@ -2,9 +2,13 @@ import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { router } from 'expo-router';
 import { useStore } from '../../state/useStore';
+import { useColorScheme } from 'react-native';
+import { getThemeColors } from '../../lib/theme';
 
 export default function MainLayout() {
-  const { wallet } = useStore();
+  const { wallet, themeMode } = useStore();
+  const systemColorScheme = useColorScheme();
+  const colors = getThemeColors(themeMode, systemColorScheme);
 
   useEffect(() => {
     if (!wallet?.address) {
@@ -13,10 +17,26 @@ export default function MainLayout() {
   }, [wallet?.address]);
 
   return (
-    <Stack screenOptions={{ headerShown: true }}>
+    <Stack 
+      screenOptions={{ 
+        headerShown: true,
+        headerStyle: {
+          backgroundColor: colors.surface,
+        },
+        headerTintColor: colors.text,
+        headerTitleStyle: {
+          color: colors.text,
+        },
+        contentStyle: {
+          backgroundColor: colors.background,
+        },
+      }}
+    >
       <Stack.Screen 
         name="index" 
-        options={{ title: 'My Badges' }} 
+        options={{ 
+          headerShown: false, // Hide header since index has its own custom header
+        }} 
       />
       <Stack.Screen 
         name="consent/new" 
