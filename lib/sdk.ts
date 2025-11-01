@@ -454,16 +454,28 @@ export async function getWalletBalance(
 ): Promise<string> {
   console.log(`[getWalletBalance] Called with:`, { address, chainId, handle });
   
-  // Check for test wallet balance first (development only)
+  // Check for test user balance first (development only)
+  // Priority: handle lookup (most reliable) > address lookup
   try {
-    const { getTestWalletBalance } = await import('./testWalletBalances');
-    const testBalance = getTestWalletBalance(address, chainId, handle);
-    if (testBalance !== null) {
-      console.log(`[TEST] Using test balance for ${address}${handle ? ` (@${handle})` : ''}: ${testBalance} ETH`);
-      return testBalance;
-    } else {
-      console.log(`[TEST] No test balance found for ${address}${handle ? ` (@${handle})` : ''}`);
+    const { getTestUserBalance, getTestUserBalanceByAddress } = await import('./testUsers');
+    
+    // Try handle-based lookup first (most reliable)
+    if (handle) {
+      const handleBalance = getTestUserBalance(handle, chainId);
+      if (handleBalance !== null) {
+        console.log(`[TEST] Using test balance for handle @${handle}: ${handleBalance} ETH`);
+        return handleBalance;
+      }
     }
+    
+    // Fallback to address-based lookup
+    const addressBalance = getTestUserBalanceByAddress(address, chainId);
+    if (addressBalance !== null) {
+      console.log(`[TEST] Using test balance for address ${address}: ${addressBalance} ETH`);
+      return addressBalance;
+    }
+    
+    console.log(`[TEST] No test balance found for ${address}${handle ? ` (@${handle})` : ''}`);
   } catch (error) {
     console.error('[getWalletBalance] Error checking test balance:', error);
     // Continue to blockchain check
