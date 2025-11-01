@@ -209,13 +209,13 @@ export async function createConsent(
   }
 
   // Check balance before sending transaction
-  const publicClient = getPublicClient(chainId);
+  const publicClientForValidation = getPublicClient(chainId);
   try {
-    const balance = await publicClient.getBalance({ address: from });
+    const balance = await publicClientForValidation.getBalance({ address: from });
     const feeWeiBigInt = BigInt(feeWei);
     // Estimate gas (conservative: 300k gas * 20 gwei = 0.006 ETH)
     const estimatedGas = BigInt(300000);
-    const gasPrice = await publicClient.getGasPrice();
+    const gasPrice = await publicClientForValidation.getGasPrice();
     const estimatedGasCost = estimatedGas * gasPrice;
     const totalRequired = feeWeiBigInt + estimatedGasCost;
 
