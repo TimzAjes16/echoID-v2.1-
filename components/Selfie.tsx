@@ -12,6 +12,7 @@ export default function Selfie({ onCaptureComplete }: SelfieProps) {
   const [facing, setFacing] = useState<CameraType>('front');
   const [permission, requestPermission] = useCameraPermissions();
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageBytes, setImageBytes] = useState<Uint8Array | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const cameraRef = useRef<CameraView>(null);
 
@@ -111,11 +112,13 @@ export default function Selfie({ onCaptureComplete }: SelfieProps) {
           return bytes.slice(0, p);
         };
         
-        const imageBytes = base64ToUint8Array(base64);
-        if (imageBytes.length === 0) {
+        const processedBytes = base64ToUint8Array(base64);
+        if (processedBytes.length === 0) {
           throw new Error('Image data is empty');
         }
-        onCaptureComplete(imageBytes);
+        // Store processed bytes - will be passed to callback when user confirms
+        setImageBytes(processedBytes);
+        // Don't call onCaptureComplete yet - wait for user to confirm or retake
       } catch (readError: any) {
         console.error('Failed to read image:', readError);
         throw new Error(`Failed to process captured image: ${readError.message || readError}`);
@@ -131,15 +134,33 @@ export default function Selfie({ onCaptureComplete }: SelfieProps) {
 
   function retake() {
     setImageUri(null);
+    setImageBytes(null);
+    setIsProcessing(false);
   }
 
-  if (imageUri) {
+  function confirmPhoto() {
+    if (imageBytes) {
+      onCaptureComplete(imageBytes);
+    }
+  }
+
+  if (imageUri && imageBytes && !isProcessing) {
     return (
       <View style={styles.container}>
+        <Text style={styles.label}>Review Photo</Text>
         <Image source={{ uri: imageUri }} style={styles.preview} />
-        <TouchableOpacity style={styles.button} onPress={retake}>
-          <Text style={styles.buttonText}>Retake</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={retake}>
+            <Text style={[styles.buttonText, styles.secondaryButtonText]}>Retake</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={confirmPhoto}
+            disabled={isProcessing}
+          >
+            <Text style={styles.buttonText}>Continue</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -244,6 +265,20 @@ const styles = StyleSheet.create({
     height: 400,
     borderRadius: 12,
     marginBottom: 20,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+    justifyContent: 'center',
+  },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#007AFF',
+  },
+  secondaryButtonText: {
+    color: '#007AFF',
   },
 });
 
