@@ -205,18 +205,25 @@ await walletClient.sendTransaction({
 ## Current Status
 
 ✅ **Implemented:**
-- On-chain consent creation with payable fee
-- Event log decoding for consentId extraction
-- Multi-chain transaction support (Base, Nova, zkEVM)
-- Local wallet transaction signing
-- WalletConnect transaction signing
+- [x] On-chain consent creation with payable fee (`lib/sdk.ts` - `createConsent`)
+- [x] Event log decoding for consentId extraction (`lib/sdk.ts` - event decoding)
+- [x] Multi-chain transaction support (Base, Nova, zkEVM)
+- [x] Local wallet transaction signing (`lib/sdk.ts` - local wallet support)
+- [x] WalletConnect transaction signing (`lib/sdk.ts` - WalletConnect support)
+- [x] Transaction monitoring utilities (`lib/transactionMonitor.ts`)
+- [x] Request unlock on-chain (`lib/sdk.ts` - `requestUnlock`)
+- [x] Approve unlock on-chain (`lib/sdk.ts` - `approveUnlock`)
 
 ⚠️ **Production Requirements:**
-- Deploy ConsentFactory contract to Base mainnet
-- Set `EXPO_PUBLIC_FACTORY_ADDRESS` to deployed contract
-- Ensure contract ABI matches implementation
-- Verify event signatures match contract
-- Test with real transactions on testnet first
+- [ ] **Deploy ConsentFactory contract to Base mainnet** ⚠️ **CRITICAL**
+  - Test on Base Sepolia testnet first
+  - Verify contract code on Basescan
+- [ ] Set `EXPO_PUBLIC_FACTORY_ADDRESS` to deployed contract address
+- [ ] Ensure contract ABI matches implementation (verify `CONSENT_FACTORY_ABI` in `lib/sdk.ts`)
+- [ ] Verify event signatures match contract
+- [ ] Test with real transactions on testnet
+- [ ] Set `EXPO_PUBLIC_TREASURY_ADDRESS` for fee collection
+- [ ] Set `EXPO_PUBLIC_PROTOCOL_FEE_WEI` for protocol fee amount
 
 ## Example Transaction on Base
 

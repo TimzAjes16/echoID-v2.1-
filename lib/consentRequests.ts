@@ -2,6 +2,7 @@ import { Consent, ConsentRequest } from '../state/useStore';
 import { sendConsentRequestNotification } from './notifications';
 import { getTestUser, isTestUser, TEST_USERS } from './testUsers';
 import { useStore } from '../state/useStore';
+import { apiCreateConsentRequest } from './api';
 
 /**
  * Create and send a consent request to a counterparty
@@ -44,10 +45,27 @@ export async function createConsentRequest(
       console.log('[MOCK] In production, backend would send push notification');
     }
   } else {
-    // For non-test users, would send via backend API
-    console.log(`[MOCK] Would send consent request to @${counterpartyHandle} via backend API`);
-    // TODO: Call backend API to send request
-    // await fetch(`${API_BASE_URL}/consent-requests`, { method: 'POST', body: JSON.stringify(request) });
+    // For non-test users, send via backend API if available
+    const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+    if (API_BASE_URL && API_BASE_URL !== 'https://api.echoid.xyz') {
+      try {
+        await apiCreateConsentRequest({
+          fromHandle: request.fromHandle,
+          fromAddress: request.fromAddress,
+          toHandle: counterpartyHandle,
+          template: request.template,
+          consentData: request.consentData,
+        });
+        console.log(`[API] Consent request sent to @${counterpartyHandle} via backend`);
+      } catch (error: any) {
+        console.error('[API] Failed to send consent request:', error.message);
+        // Fall back to local storage for now
+        console.log('[FALLBACK] Storing consent request locally');
+      }
+    } else {
+      // Mock mode - backend not available
+      console.log(`[MOCK] Would send consent request to @${counterpartyHandle} via backend API`);
+    }
   }
 }
 

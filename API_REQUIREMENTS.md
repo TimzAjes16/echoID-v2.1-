@@ -218,31 +218,41 @@ EXPO_PUBLIC_INFURA_PROJECT_ID=your_infura_id (optional)
 ### Phase 1: Backend API (Critical)
 - [ ] Set up backend server (Node.js/Express, Python/FastAPI, or Rust)
 - [ ] Implement handle management endpoints
+  - [x] Client code ready (`lib/api.ts` - `apiClaimHandle`, `apiResolveHandle`, `apiGetSignatureChallenge`, `apiVerifyHandleSignature`)
+  - [ ] Backend implementation needed
 - [ ] Implement consent request endpoints
+  - [x] Client code ready (`lib/api.ts` - `apiCreateConsentRequest`, `apiGetConsentRequests`, `apiAcceptConsentRequest`, `apiRejectConsentRequest`)
+  - [ ] Backend implementation needed
 - [ ] Database for handles and consent requests
 - [ ] User authentication/authorization
 
 ### Phase 2: Push Notifications (Critical)
-- [ ] Set up Expo Push Notification Service
+- [x] Set up Expo Push Notification Service (local notifications working)
+- [x] Client-side device registration (`lib/deviceRegistration.ts`)
+- [x] Device token retrieval (`lib/notifications.ts` - `getNotificationToken`)
+- [x] Device registration on login (`app/(auth)/index.tsx`)
+- [x] Device unregistration on logout (`components/Drawer.tsx`)
 - [ ] Backend service to send push notifications
-- [ ] Device token registration endpoint
+- [ ] Device token registration endpoint (client ready, backend needed)
 - [ ] Notification delivery confirmation
 
 ### Phase 3: Payment Processing (High Priority)
 - [ ] Integrate Apple Pay (requires native build)
 - [ ] Payment processor API (Stripe, Square, etc.)
-- [ ] Or use crypto payments via WalletConnect (simpler)
+- [x] Crypto payments via WalletConnect (IMPLEMENTED - protocol fee collected on-chain)
 - [ ] Payment confirmation webhooks
 
 ### Phase 4: Blockchain Integration (Critical)
-- [ ] Deploy ConsentFactory contract to Base mainnet
-- [ ] Set up transaction monitoring service
-- [ ] Event listening for consent creation
+- [ ] Deploy ConsentFactory contract to Base mainnet (REQUIRED - see setup guide below)
+- [x] Client-side transaction signing (local wallet + WalletConnect)
+- [x] Event decoding for consentId extraction (`lib/sdk.ts`)
+- [x] Transaction monitoring utilities (`lib/transactionMonitor.ts`)
+- [x] Multi-chain support (Base, Base Nova, Polygon zkEVM ready)
 - [ ] Gas price optimization
 
 ### Phase 5: Storage Migration
 - [ ] Migrate from deprecated web3.storage to w3up
-- [ ] Test encrypted file uploads
+- [x] Encrypted file uploads (`lib/ipfs.ts`)
 - [ ] Implement CID storage in backend
 
 ## 8. Recommended Tech Stack
@@ -312,46 +322,75 @@ The current implementation works in **mock/offline mode** for testing:
 
 ## 11. Next Steps for Production
 
-### Phase 1: Blockchain (Critical - Already Partially Implemented)
-1. **Deploy ConsentFactory contract** to Base mainnet
-   - Verify contract code on Basescan
-   - Set factory address in environment variables
-   - Test on Base Sepolia testnet first
+### Phase 1: Blockchain (Critical - Client Code Ready)
+1. **Deploy ConsentFactory contract** to Base mainnet ⚠️ **REQUIRED**
+   - [ ] Deploy contract to Base Sepolia testnet first
+   - [ ] Verify contract code on Basescan
+   - [ ] Set `EXPO_PUBLIC_FACTORY_ADDRESS` in `.env`
+   - [ ] Deploy to Base mainnet
+   - [ ] Update `EXPO_PUBLIC_FACTORY_ADDRESS` to mainnet address
 2. **Verify event decoding** works with deployed contract
-   - Ensure ABI matches deployed contract
-   - Test event extraction from logs
+   - [x] Client code ready (`lib/sdk.ts` - event decoding implemented)
+   - [ ] Test with deployed contract
+   - [ ] Ensure ABI matches deployed contract
 3. **Set treasury address** for fee collection
-   - Deploy or use existing multisig wallet
+   - [ ] Deploy or use existing multisig wallet
+   - [ ] Set `EXPO_PUBLIC_TREASURY_ADDRESS` in `.env`
+   - [ ] Update contract to use treasury address
 
-### Phase 2: Backend API (Critical)
-1. **Set up backend server** (Node.js/Python/Rust)
+### Phase 2: Backend API (Critical - Client Code Ready)
+1. **Set up backend server** (Node.js/Python/Rust) ⚠️ **REQUIRED**
 2. **Implement handle management** endpoints
+   - [x] Client code ready (`lib/api.ts`)
+   - [ ] Backend implementation needed
 3. **Implement consent request** endpoints
+   - [x] Client code ready (`lib/api.ts`)
+   - [ ] Backend implementation needed
 4. **Database setup** (PostgreSQL/MongoDB)
+   - [ ] Handles table
+   - [ ] Consent requests table
+   - [ ] Device registrations table
+5. **Remote config endpoint**
+   - [x] Client code ready (`lib/api.ts` - `apiGetRemoteConfig`)
+   - [ ] Backend implementation needed
 
-### Phase 3: Push Notifications (High Priority)
+### Phase 3: Push Notifications (High Priority - Client Code Ready)
 1. **Expo Push Notification setup**
-2. **Backend notification service**
+   - [x] Client code ready (`lib/notifications.ts`)
+   - [ ] Get Expo project ID from https://expo.dev
+   - [ ] Set `EXPO_PUBLIC_EXPO_PROJECT_ID` in `.env`
+2. **Backend notification service** ⚠️ **REQUIRED**
+   - [x] Client code ready (`lib/api.ts` - `apiSendNotification`)
+   - [ ] Backend implementation needed
+   - [ ] Integrate Expo Push API
 3. **Device token registration**
+   - [x] Client code ready (`lib/deviceRegistration.ts`)
+   - [ ] Backend endpoint ready (client calls it automatically)
 4. **Test notifications** to other devices
 
-### Phase 4: Payment (Medium Priority)
-- **Option A (Recommended):** Use crypto payments (already implemented)
-  - Protocol fee collected on-chain via `createConsent` payable function
-  - No additional payment processor needed
+### Phase 4: Payment (Medium Priority - Crypto Payments Implemented)
+- **Option A (Recommended):** Use crypto payments ✅ **IMPLEMENTED**
+  - [x] Protocol fee collected on-chain via `createConsent` payable function
+  - [x] Local wallet support
+  - [x] WalletConnect support
+  - [ ] No additional payment processor needed
 - **Option B:** Add Apple Pay (requires native dev client)
-  - Integrate Apple Pay SDK
-  - Payment processor API
-  - Convert fiat → crypto for on-chain payment
+  - [ ] Integrate Apple Pay SDK (requires custom dev client build)
+  - [ ] Payment processor API
+  - [ ] Convert fiat → crypto for on-chain payment
 
 ### Phase 5: Monitoring & Analytics
 1. **Transaction monitoring** service
+   - [x] Client utilities ready (`lib/transactionMonitor.ts`)
+   - [ ] Backend monitoring endpoint (optional)
 2. **Error tracking** (Sentry, etc.)
+   - [ ] Integrate error tracking
 3. **Analytics** (Mixpanel, Amplitude)
+   - [ ] Integrate analytics
 
 ### Phase 6: Production Hardening
-1. **Migrate to custom dev client** for native features
-2. **Security audit** of smart contracts
+1. **Migrate to custom dev client** for native features (if using Apple Pay)
+2. **Security audit** of smart contracts ⚠️ **CRITICAL**
 3. **Load testing** of backend APIs
 4. **Beta testing** with real users
 

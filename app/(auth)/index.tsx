@@ -85,11 +85,17 @@ export default function AuthScreen() {
         }
       }
 
-      // Save profile
-      await setProfile({ handle, devicePubKey });
+          // Save profile
+          await setProfile({ handle, devicePubKey });
 
-      // Navigate to main app
-      router.replace('/(main)');
+          // Register device for push notifications
+          const { registerDeviceWithBackend } = await import('../../lib/deviceRegistration');
+          registerDeviceWithBackend().catch(err => {
+            console.warn('Failed to register device (non-critical):', err);
+          });
+
+          // Navigate to main app
+          router.replace('/(main)');
     } catch (error: any) {
       console.error('Login error:', error);
       Alert.alert('Error', error.message || 'Failed to login');

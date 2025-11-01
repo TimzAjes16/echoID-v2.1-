@@ -76,8 +76,9 @@ export async function sendConsentRequestNotification(request: ConsentRequest): P
 export async function getNotificationToken(): Promise<string | null> {
   try {
     await requestNotificationPermissions();
+    const projectId = process.env.EXPO_PUBLIC_EXPO_PROJECT_ID || 'echoid-expogo';
     const token = await Notifications.getExpoPushTokenAsync({
-      projectId: 'echoid-expogo',
+      projectId,
     });
     return token.data;
   } catch (error) {

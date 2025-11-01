@@ -13,6 +13,12 @@ export default function Drawer({ visible, onClose }: DrawerProps) {
   const router = useRouter();
 
   const handleLogout = async () => {
+    // Unregister device from backend
+    const { unregisterDeviceFromBackend } = await import('../lib/deviceRegistration');
+    await unregisterDeviceFromBackend().catch(err => {
+      console.warn('Failed to unregister device (non-critical):', err);
+    });
+    
     await disconnectWallet();
     router.replace('/(auth)');
     onClose();
