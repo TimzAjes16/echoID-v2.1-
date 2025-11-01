@@ -12,18 +12,35 @@ export async function createConsentRequest(
   consentData: any
 ): Promise<void> {
   const currentUser = useStore.getState();
+  
+  // Ensure we have valid handle and address
+  const fromHandle = currentUser.profile?.handle?.trim() || 'unknown';
+  const fromAddress = currentUser.wallet?.address || '';
+  
+  if (!fromAddress) {
+    throw new Error('Wallet address not available');
+  }
+  
   const request: ConsentRequest = {
     id: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    fromHandle: currentUser.profile.handle || 'unknown',
-    fromAddress: currentUser.wallet.address || '',
+    fromHandle,
+    fromAddress,
     template,
-    requestedAt: Date.now(),
+    requestedAt: Date.now(), // Ensure timestamp is set
     consentData: {
       ...consentData,
       counterpartyHandle,
       counterpartyAddress,
     },
   };
+  
+  console.log('[createConsentRequest] Created request:', {
+    id: request.id,
+    fromHandle: request.fromHandle,
+    fromAddress: request.fromAddress,
+    template: request.template,
+    requestedAt: request.requestedAt,
+  });
 
   // Send via backend API (handles both test users and regular users from database)
   const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.echoid.xyz';

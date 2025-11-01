@@ -13,27 +13,43 @@ export default function ConsentRequestsScreen() {
   async function handleAccept(requestId: string) {
     setProcessing(requestId);
     try {
+      console.log('Attempting to accept request:', requestId);
       const request = useStore.getState().getConsentRequest(requestId);
+      
       if (!request) {
+        console.error('Request not found in store. Available requests:', 
+          useStore.getState().consentRequests.map(r => r.id));
         throw new Error('Request not found');
       }
 
+      console.log('Request found:', {
+        id: request.id,
+        fromHandle: request.fromHandle,
+        fromAddress: request.fromAddress,
+        hasConsentData: !!request.consentData,
+      });
+
       // Accept the consent request - this creates consent on-chain and mints NFT/Badge
+      console.log('Calling acceptConsentRequest...');
       const consent = await acceptConsentRequest(request);
+      console.log('Consent created:', {
+        id: consent.id,
+        consentId: consent.consentId.toString(),
+        counterparty: consent.counterparty,
+      });
+      
       addConsent(consent);
       removeConsentRequest(requestId);
 
       // Show success with blockchain info
       Alert.alert(
         'Consent Accepted & Badge Minted',
-        `Your consent badge has been minted on the blockchain.\n\nConsent ID: ${consent.consentId}\nYou can view it on Base blockchain explorer.`,
+        `Your consent badge has been minted on the blockchain.\n\nConsent ID: ${consent.consentId.toString()}\nYou can view it on Base blockchain explorer.`,
         [
           {
             text: 'View on Explorer',
             onPress: async () => {
               // Open blockchain explorer in browser
-              // Note: consentId is a bigint, we'll need the transaction hash for explorer
-              // In production, store txHash with consent
               const explorerUrl = `https://basescan.org`;
               try {
                 await Linking.openURL(explorerUrl);
@@ -44,12 +60,20 @@ export default function ConsentRequestsScreen() {
           },
           {
             text: 'OK',
-            onPress: () => router.back(),
+            onPress: () => {
+              // Navigate back to home screen
+              router.replace('/(main)');
+            },
           },
         ]
       );
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to accept request');
+      console.error('Error accepting request:', error);
+      Alert.alert(
+        'Error', 
+        error.message || 'Failed to accept request',
+        [{ text: 'OK' }]
+      );
     } finally {
       setProcessing(null);
     }
@@ -73,20 +97,43 @@ export default function ConsentRequestsScreen() {
   function renderRequest({ item }: { item: ConsentRequest }) {
     const isProcessing = processing === item.id;
     
-    // Format date safely
-    const formattedDate = item.requestedAt 
-      ? new Date(item.requestedAt).toLocaleString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })
-      : 'Recently';
+    // Debug: Log the item to see what data we have
+    console.log('Rendering request:', {
+      id: item.id,
+      fromHandle: item.fromHandle,
+      requestedAt: item.requestedAt,
+      template: item.template,
+    });
     
-    // Ensure handle is displayed properly
-    const displayHandle = item.fromHandle && item.fromHandle !== 'unknown' 
-      ? `@${item.fromHandle}` 
-      : 'Unknown User';
+    // Format date safely - handle both timestamp (number) and Date objects
+    let formattedDate = 'Recently';
+    if (item.requestedAt) {
+      try {
+        const date = typeof item.requestedAt === 'number' 
+          ? new Date(item.requestedAt) 
+          : new Date(item.requestedAt);
+        
+        if (!isNaN(date.getTime())) {
+          formattedDate = date.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+        }
+      } catch (error) {
+        console.error('Date formatting error:', error);
+        formattedDate = 'Recently';
+      }
+    }
+    
+    // Ensure handle is displayed properly - check for null, undefined, empty, or 'unknown'
+    const handle = item.fromHandle?.trim() || '';
+    const displayHandle = handle && handle !== 'unknown' && handle !== 'null' && handle !== 'undefined'
+      ? `@${handle}` 
+      : item.fromAddress 
+        ? `${item.fromAddress.slice(0, 6)}...${item.fromAddress.slice(-4)}`
+        : 'Unknown User';
 
     return (
       <View style={styles.requestCard} key={item.id}>
@@ -139,9 +186,10 @@ export default function ConsentRequestsScreen() {
         <FlatList
           data={consentRequests}
           renderItem={renderRequest}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => item.id || `request-${index}`}
           contentContainerStyle={styles.list}
           removeClippedSubviews={false}
+          extraData={consentRequests.length}
         />
       )}
     </View>
