@@ -107,12 +107,33 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
   }
 
   async function initSession() {
-    if (!deviceKeypair || !wallet.address) {
+    if (!wallet.address) {
       setIsLoading(false);
       return;
     }
 
     try {
+      // Get current user's device pubkey from profile or deviceKeypair
+      let myDevicePubKey: Uint8Array | null = null;
+      
+      if (profile?.devicePubKey) {
+        // Use profile's devicePubKey (for test users with static keys)
+        const binaryString = atob(profile.devicePubKey);
+        myDevicePubKey = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          myDevicePubKey[i] = binaryString.charCodeAt(i);
+        }
+      } else if (deviceKeypair?.publicKey) {
+        // Fallback to deviceKeypair from SecureStore
+        myDevicePubKey = deviceKeypair.publicKey;
+      }
+      
+      if (!myDevicePubKey) {
+        console.error('[Chat] No device pubkey available');
+        setIsLoading(false);
+        return;
+      }
+
       // Get counterparty device pubkey from handle
       let counterpartyPubKey: Uint8Array | null = null;
       
@@ -145,7 +166,7 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
       }
 
       const key = deriveChatKey(
-        deviceKeypair.publicKey,
+        myDevicePubKey,
         counterpartyPubKey,
         consent.id
       );
