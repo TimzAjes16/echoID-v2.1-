@@ -24,7 +24,7 @@ export default function Drawer({ visible, onClose }: DrawerProps) {
   };
 
   const handleSettings = () => {
-    // Navigate to settings if you create that screen
+    router.push('/(main)/settings');
     onClose();
   };
 
@@ -70,14 +70,37 @@ export default function Drawer({ visible, onClose }: DrawerProps) {
 
             <View style={styles.divider} />
 
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => {
+                router.push('/(main)/help');
+                onClose();
+              }}
+            >
               <Ionicons name="help-circle-outline" size={24} color="#333" />
               <Text style={styles.menuText}>Help & Support</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => {
+                router.push('/(main)/terms');
+                onClose();
+              }}
+            >
               <Ionicons name="document-text-outline" size={24} color="#333" />
-              <Text style={styles.menuText}>Terms & Privacy</Text>
+              <Text style={styles.menuText}>Terms of Service</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => {
+                router.push('/(main)/privacy');
+                onClose();
+              }}
+            >
+              <Ionicons name="lock-closed-outline" size={24} color="#333" />
+              <Text style={styles.menuText}>Privacy Policy</Text>
             </TouchableOpacity>
 
             <View style={styles.divider} />

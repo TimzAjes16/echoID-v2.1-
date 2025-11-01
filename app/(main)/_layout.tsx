@@ -34,6 +34,38 @@ export default function MainLayout() {
         name="requests" 
         options={{ title: 'Consent Requests' }} 
       />
+      <Stack.Screen 
+        name="settings" 
+        options={{ title: 'Settings' }} 
+      />
+      <Stack.Screen 
+        name="help" 
+        options={{ title: 'Help & Support' }} 
+      />
+      <Stack.Screen 
+        name="terms" 
+        options={{ title: 'Terms of Service' }} 
+      />
+      <Stack.Screen 
+        name="privacy" 
+        options={{ title: 'Privacy Policy' }} 
+      />
+      <Stack.Screen 
+        name="cookies" 
+        options={{ title: 'Cookie Policy' }} 
+      />
+      <Stack.Screen 
+        name="data-rights" 
+        options={{ title: 'Your Data Rights' }} 
+      />
+      <Stack.Screen 
+        name="export-data" 
+        options={{ title: 'Export Data' }} 
+      />
+      <Stack.Screen 
+        name="delete-account" 
+        options={{ title: 'Delete Account' }} 
+      />
     </Stack>
   );
 }
