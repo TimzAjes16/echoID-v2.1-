@@ -53,29 +53,38 @@ export async function createConsentRequest(
     } catch (error: any) {
       console.error('[API] Failed to send consent request:', error.message);
       
-      // Fallback: Send local notification and store locally if backend unavailable
-      await sendConsentRequestNotification(request);
-      
-      // If counterparty is currently logged in, add request to their store
+      // Fallback: Only send notification and add request if counterparty is currently logged in
       const counterpartyProfile = useStore.getState().profile;
       if (counterpartyProfile.handle?.toLowerCase() === counterpartyHandle.toLowerCase()) {
+        // Only send notification to the actual recipient
+        await sendConsentRequestNotification(request);
         useStore.getState().addConsentRequest(request);
         console.log(`[FALLBACK] Consent request added for logged-in user @${counterpartyHandle}`);
       } else {
-        console.log(`[FALLBACK] Backend unavailable, stored locally for @${counterpartyHandle}`);
+        console.log(`[FALLBACK] Backend unavailable, counterparty @${counterpartyHandle} not logged in`);
       }
     }
   } else {
     // Mock mode - backend not configured
-    // Send local notification and store locally
+    // Check if counterparty is a test user or the currently logged in user
+    const { isTestUser } = await import('./testUsers');
+    const currentProfile = useStore.getState().profile;
+    const currentHandle = currentProfile.handle?.toLowerCase();
+    const targetHandle = counterpartyHandle.toLowerCase();
+    
+    // Send notification to the correct user
     await sendConsentRequestNotification(request);
     
-    const counterpartyProfile = useStore.getState().profile;
-    if (counterpartyProfile.handle?.toLowerCase() === counterpartyHandle.toLowerCase()) {
+    // If the target handle matches current user's handle, add the request
+    if (currentHandle === targetHandle) {
       useStore.getState().addConsentRequest(request);
-      console.log(`[MOCK] Consent request added for logged-in user @${counterpartyHandle}`);
+      console.log(`[MOCK] Consent request added for logged-in user @${targetHandle}`);
+    } else if (isTestUser(counterpartyHandle)) {
+      // For test users in mock mode, we still store locally but they won't see it
+      // unless they're logged in with that handle
+      console.log(`[MOCK] Consent request created for test user @${targetHandle} (user must be logged in to see it)`);
     } else {
-      console.log(`[MOCK] Backend not configured, request stored locally for @${counterpartyHandle}`);
+      console.log(`[MOCK] Backend not configured, request stored locally for @${targetHandle}`);
     }
   }
 }

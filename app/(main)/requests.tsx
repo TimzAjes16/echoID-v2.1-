@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useStore, ConsentRequest } from '../../state/useStore';
 import { acceptConsentRequest, rejectConsentRequest } from '../../lib/consentRequests';
@@ -18,13 +18,36 @@ export default function ConsentRequestsScreen() {
         throw new Error('Request not found');
       }
 
-      // Accept the consent request
+      // Accept the consent request - this creates consent on-chain and mints NFT/Badge
       const consent = await acceptConsentRequest(request);
       addConsent(consent);
       removeConsentRequest(requestId);
 
-      Alert.alert('Success', 'Consent request accepted');
-      router.back();
+      // Show success with blockchain info
+      Alert.alert(
+        'Consent Accepted & Badge Minted',
+        `Your consent badge has been minted on the blockchain.\n\nConsent ID: ${consent.consentId}\nYou can view it on Base blockchain explorer.`,
+        [
+          {
+            text: 'View on Explorer',
+            onPress: async () => {
+              // Open blockchain explorer in browser
+              // Note: consentId is a bigint, we'll need the transaction hash for explorer
+              // In production, store txHash with consent
+              const explorerUrl = `https://basescan.org`;
+              try {
+                await Linking.openURL(explorerUrl);
+              } catch (error) {
+                console.log('Could not open explorer:', explorerUrl);
+              }
+            },
+          },
+          {
+            text: 'OK',
+            onPress: () => router.back(),
+          },
+        ]
+      );
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to accept request');
     } finally {
@@ -49,17 +72,30 @@ export default function ConsentRequestsScreen() {
 
   function renderRequest({ item }: { item: ConsentRequest }) {
     const isProcessing = processing === item.id;
+    
+    // Format date safely
+    const formattedDate = item.requestedAt 
+      ? new Date(item.requestedAt).toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : 'Recently';
+    
+    // Ensure handle is displayed properly
+    const displayHandle = item.fromHandle && item.fromHandle !== 'unknown' 
+      ? `@${item.fromHandle}` 
+      : 'Unknown User';
 
     return (
-      <View style={styles.requestCard}>
+      <View style={styles.requestCard} key={item.id}>
         <View style={styles.requestHeader}>
           <Ionicons name="document-text" size={24} color="#007AFF" />
           <View style={styles.requestInfo}>
-            <Text style={styles.fromHandle}>@{item.fromHandle}</Text>
-            <Text style={styles.template}>{item.template}</Text>
-            <Text style={styles.time}>
-              {new Date(item.requestedAt).toLocaleString()}
-            </Text>
+            <Text style={styles.fromHandle}>{displayHandle}</Text>
+            <Text style={styles.template}>{item.template || 'Consent Request'}</Text>
+            <Text style={styles.time}>{formattedDate}</Text>
           </View>
         </View>
 
@@ -105,6 +141,7 @@ export default function ConsentRequestsScreen() {
           renderItem={renderRequest}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
+          removeClippedSubviews={false}
         />
       )}
     </View>
