@@ -54,10 +54,12 @@ export default function AuthScreen() {
 
       // Get signature challenge
       let challenge: string;
+      let isNewHandle = false;
       try {
         challenge = await getSignatureChallenge(handle, currentWallet.address);
-      } catch (error) {
-        // Handle doesn't exist, claim it
+      } catch (error: any) {
+        // Handle doesn't exist or backend unavailable, claim it
+        isNewHandle = true;
         setIsCreating(true);
         
         // Create challenge for new handle
@@ -67,14 +69,14 @@ export default function AuthScreen() {
         // Sign challenge
         const signature = await signMessageLocal(challenge);
         
-        // Claim handle
+        // Claim handle (may use mock mode if backend unavailable)
         await claimHandle(handle, currentWallet.address, devicePubKey, signature);
         
         setIsCreating(false);
       }
 
       // Verify signature (for existing handles)
-      if (!isCreating) {
+      if (!isNewHandle) {
         const signature = await signMessageLocal(challenge);
         const isValid = await verifyHandleSignature(handle, currentWallet.address, signature, challenge);
         
