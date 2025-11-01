@@ -90,7 +90,28 @@ export async function claimHandle(
  * Resolve handle to wallet address and device pubkey
  */
 export async function resolveHandle(handle: string): Promise<HandleMapping | null> {
-  // Check test users first
+  // Try API first (includes test users from database)
+  const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.echoid.xyz';
+  
+  if (API_BASE_URL && API_BASE_URL !== 'https://api.echoid.xyz') {
+    try {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/handles/${encodeURIComponent(handle)}`, {
+        method: 'GET',
+      });
+      
+      if (response.ok) {
+        return response.json();
+      }
+      
+      if (response.status === 404) {
+        return null;
+      }
+    } catch (error) {
+      console.warn('API resolve failed, falling back to local test users:', error);
+    }
+  }
+
+  // Fallback: Check local test users (for offline development)
   const { getTestUser } = await import('./testUsers');
   const testUser = getTestUser(handle);
   if (testUser) {
@@ -101,30 +122,8 @@ export async function resolveHandle(handle: string): Promise<HandleMapping | nul
     };
   }
 
-  // Mock mode for MVP
-  if (USE_MOCK_MODE) {
-    // In mock mode, we don't resolve handles - return null to indicate handle doesn't exist
-    return null;
-  }
-
-  try {
-    const response = await fetchWithTimeout(`${API_BASE_URL}/handles/${encodeURIComponent(handle)}`, {
-      method: 'GET',
-    });
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        return null;
-      }
-      throw new Error('Failed to resolve handle');
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error('Error resolving handle:', error);
-    // In case of network error, return null (handle doesn't exist)
-    return null;
-  }
+  // Mock mode or no match
+  return null;
 }
 
 /**

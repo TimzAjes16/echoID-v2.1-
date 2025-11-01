@@ -76,12 +76,28 @@ router.post('/claim', async (req, res, next) => {
 
 /**
  * GET /handles/:handle
- * Resolve handle to wallet address
+ * Resolve handle to wallet address (checks both handles and test_users tables)
  */
 router.get('/:handle', async (req, res, next) => {
   try {
     const handle = req.params.handle.toLowerCase();
 
+    // First check test_users table
+    const testUserResult = await pool.query(
+      'SELECT handle, wallet_address, device_pub_key FROM test_users WHERE handle = $1 AND is_active = true',
+      [handle]
+    );
+
+    if (testUserResult.rows.length > 0) {
+      const row = testUserResult.rows[0];
+      return res.json({
+        handle: row.handle,
+        walletAddress: row.wallet_address,
+        devicePubKey: row.device_pub_key,
+      });
+    }
+
+    // Then check handles table
     const result = await pool.query(
       'SELECT handle, wallet_address, device_pub_key FROM handles WHERE handle = $1',
       [handle]

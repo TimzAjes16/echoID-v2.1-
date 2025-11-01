@@ -12,6 +12,7 @@ import userRoutes from './routes/users.js';
 import notificationRoutes from './routes/notifications.js';
 import configRoutes from './routes/config.js';
 import transactionRoutes from './routes/transactions.js';
+import testUserRoutes from './routes/testUsers.js';
 
 dotenv.config();
 
@@ -48,6 +49,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/test-users', testUserRoutes);
 
 // Error handling
 app.use(errorHandler);

@@ -87,6 +87,65 @@ export async function createTables(pool) {
     CREATE INDEX IF NOT EXISTS idx_transactions_status ON transactions(status);
   `);
 
+  // Test users table (for development/testing)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS test_users (
+      handle VARCHAR(255) PRIMARY KEY,
+      wallet_address VARCHAR(42) NOT NULL,
+      device_pub_key TEXT NOT NULL,
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // Seed test users if table is empty
+  const testUserCheck = await pool.query('SELECT COUNT(*) FROM test_users');
+  if (parseInt(testUserCheck.rows[0].count) === 0) {
+    await seedTestUsers(pool);
+  }
+
   console.log('✅ Database tables created/verified');
+}
+
+/**
+ * Seed test users for development
+ */
+async function seedTestUsers(pool) {
+  const testUsers = [
+    {
+      handle: 'sarah',
+      walletAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+      devicePubKey: 'dGVzdF9kZXZpY2VfcHVia2V5X3NhcmFo',
+    },
+    {
+      handle: 'mike',
+      walletAddress: '0x8ba1f109551bD432803012645Hac136c808C817',
+      devicePubKey: 'dGVzdF9kZXZpY2VfcHVia2V5X21pa2U=',
+    },
+  ];
+
+  for (const user of testUsers) {
+    try {
+      // First, add to handles table
+      await pool.query(
+        `INSERT INTO handles (handle, wallet_address, device_pub_key) 
+         VALUES ($1, $2, $3)
+         ON CONFLICT (handle) DO NOTHING`,
+        [user.handle, user.walletAddress, user.devicePubKey]
+      );
+
+      // Then, add to test_users table
+      await pool.query(
+        `INSERT INTO test_users (handle, wallet_address, device_pub_key) 
+         VALUES ($1, $2, $3)
+         ON CONFLICT (handle) DO NOTHING`,
+        [user.handle, user.walletAddress, user.devicePubKey]
+      );
+    } catch (error) {
+      console.error(`Error seeding test user ${user.handle}:`, error);
+    }
+  }
+
+  console.log('✅ Test users seeded');
 }
 
