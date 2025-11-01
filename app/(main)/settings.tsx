@@ -12,6 +12,7 @@ export default function SettingsScreen() {
   const systemColorScheme = useColorScheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
+  const [testingExpoToken, setTestingExpoToken] = useState(false);
   
   const colors = getThemeColors(themeMode, systemColorScheme);
   const styles = createStyles(colors);
