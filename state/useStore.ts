@@ -75,9 +75,10 @@ interface AppState {
   
   // Consent Requests (pending requests from others)
   consentRequests: ConsentRequest[];
-  addConsentRequest: (request: ConsentRequest) => void;
-  removeConsentRequest: (id: string) => void;
+  addConsentRequest: (request: ConsentRequest) => Promise<void>;
+  removeConsentRequest: (id: string) => Promise<void>;
   getConsentRequest: (id: string) => ConsentRequest | undefined;
+  loadConsentRequests: () => Promise<ConsentRequest[]>;
   
   // Device keypair
   deviceKeypair: { publicKey: Uint8Array; secretKey: Uint8Array } | null;
