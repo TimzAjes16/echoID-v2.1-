@@ -245,6 +245,13 @@ export async function acceptConsentRequest(request: ConsentRequest): Promise<Con
 
   // Create consent object for acceptor (Katie)
   // This consent shows Katie's perspective: counterparty is Sarah
+  console.log('[acceptConsentRequest] Creating consent for acceptor:', {
+    acceptorHandle,
+    acceptorAddress,
+    requestFromHandle: request.fromHandle,
+    requestFromAddress: request.fromAddress,
+  });
+  
   const consentForAcceptor: Consent = {
     id: `consent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     consentId,
@@ -264,6 +271,12 @@ export async function acceptConsentRequest(request: ConsentRequest): Promise<Con
     coercionLevel: consentData.coercionLevel || 0,
     status: 'active',
   };
+  
+  console.log('[acceptConsentRequest] Created consentForAcceptor:', {
+    id: consentForAcceptor.id,
+    counterparty: consentForAcceptor.counterparty,
+    counterpartyHandle: consentForAcceptor.counterpartyHandle,
+  });
 
   // Also create a consent for the requester (Sarah) so she can see it too
   // This consent shows Sarah's perspective: counterparty is Katie
