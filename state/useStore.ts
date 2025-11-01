@@ -5,6 +5,7 @@ import { fetchRemoteConfig, type RemoteConfig } from '../lib/sdk';
 import * as SecureStore from 'expo-secure-store';
 import { getDeviceKeypair } from '../lib/crypto';
 import { getLocalWallet, createLocalWallet, type Address } from '../lib/wallet';
+import { getStoredThemeMode, setStoredThemeMode } from '../lib/theme';
 
 export interface Consent {
   id: string;
@@ -47,6 +48,8 @@ export interface Profile {
   devicePubKey: string | null;
 }
 
+export type ThemeMode = 'light' | 'dark' | 'auto';
+
 interface AppState {
   // Wallet
   wallet: WalletState;
@@ -79,6 +82,11 @@ interface AppState {
   // Device keypair
   deviceKeypair: { publicKey: Uint8Array; secretKey: Uint8Array } | null;
   loadDeviceKeypair: () => Promise<void>;
+  
+  // Theme
+  themeMode: ThemeMode;
+  setThemeMode: (mode: ThemeMode) => Promise<void>;
+  loadThemeMode: () => Promise<void>;
 }
 
 const PROFILE_STORAGE_KEY = 'profile';
@@ -288,6 +296,21 @@ export const useStore = create<AppState>((set, get) => ({
       set({ deviceKeypair: keypair });
     } catch (error) {
       console.error('Failed to load device keypair:', error);
+    }
+  },
+
+  // Theme actions
+  setThemeMode: async (mode: ThemeMode) => {
+    await setStoredThemeMode(mode);
+    set({ themeMode: mode });
+  },
+
+  loadThemeMode: async () => {
+    try {
+      const mode = await getStoredThemeMode();
+      set({ themeMode: mode });
+    } catch (error) {
+      console.error('Failed to load theme mode:', error);
     }
   },
 }));
