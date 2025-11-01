@@ -17,7 +17,7 @@ export const TEST_USERS: TestUser[] = [
     walletAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
     devicePubKey: 'dGVzdF9kZXZpY2VfcHVia2V5X3NhcmFo',
     name: 'Sarah',
-    balanceETH: '0', // Sarah has no balance
+    balanceETH: '0.1', // Sarah has no balance
   },
   {
     handle: 'mike',
