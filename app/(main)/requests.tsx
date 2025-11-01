@@ -10,6 +10,18 @@ export default function ConsentRequestsScreen() {
   const { consentRequests, removeConsentRequest, addConsent } = useStore();
   const [processing, setProcessing] = useState<string | null>(null);
 
+  // Deduplicate consent requests by ID to prevent duplicate key errors
+  const uniqueConsentRequests = consentRequests.reduce((acc, current) => {
+    const existingIndex = acc.findIndex(item => item.id === current.id);
+    if (existingIndex === -1) {
+      acc.push(current);
+    } else {
+      // If duplicate found, keep the most recent one
+      acc[existingIndex] = current;
+    }
+    return acc;
+  }, [] as ConsentRequest[]);
+
   async function handleAccept(requestId: string) {
     setProcessing(requestId);
     try {
@@ -197,7 +209,7 @@ export default function ConsentRequestsScreen() {
         : 'Unknown User';
 
     return (
-      <View style={styles.requestCard} key={item.id}>
+      <View style={styles.requestCard}>
         <View style={styles.requestHeader}>
           <Ionicons name="document-text" size={24} color="#007AFF" />
           <View style={styles.requestInfo}>
@@ -235,7 +247,7 @@ export default function ConsentRequestsScreen() {
         <Text style={styles.title}>Consent Requests</Text>
       </View>
 
-      {consentRequests.length === 0 ? (
+      {uniqueConsentRequests.length === 0 ? (
         <View style={styles.empty}>
           <Ionicons name="checkmark-circle-outline" size={64} color="#ccc" />
           <Text style={styles.emptyText}>No pending requests</Text>
@@ -245,12 +257,18 @@ export default function ConsentRequestsScreen() {
         </View>
       ) : (
         <FlatList
-          data={consentRequests}
+          data={uniqueConsentRequests}
           renderItem={renderRequest}
-          keyExtractor={(item, index) => item.id || `request-${index}`}
+          keyExtractor={(item, index) => {
+            // Ensure unique keys: combine ID with index to guarantee uniqueness
+            if (item.id) {
+              return `req_${item.id}_${index}`;
+            }
+            return `request-${index}`;
+          }}
           contentContainerStyle={styles.list}
           removeClippedSubviews={false}
-          extraData={consentRequests.length}
+          extraData={uniqueConsentRequests.length}
         />
       )}
     </View>
