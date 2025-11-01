@@ -9,7 +9,8 @@ import {
   KeyboardAvoidingView, 
   Platform,
   Modal,
-  useColorScheme
+  useColorScheme,
+  Alert
 } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 import { Consent } from '../state/useStore';
@@ -51,6 +52,9 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
   const [db, setDb] = useState<SQLite.SQLiteDatabase | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('');
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -237,6 +241,99 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
     setShowEmojiPicker(false);
   }
 
+  function handleMenuPress() {
+    setShowMenu(true);
+  }
+
+  function handleRequestPayment() {
+    setShowMenu(false);
+    setShowPaymentModal(true);
+  }
+
+  async function sendPaymentRequest() {
+    if (!paymentAmount.trim()) return;
+    
+    const amount = parseFloat(paymentAmount);
+    if (isNaN(amount) || amount <= 0) {
+      Alert.alert('Invalid Amount', 'Please enter a valid payment amount');
+      return;
+    }
+
+    try {
+      // Send payment request as a special encrypted message
+      const paymentMessage = `💸 Payment Request: ${amount} ETH\n\nRequest ID: ${Date.now()}`;
+      
+      if (!sessionKey || !wallet.address || !db) {
+        Alert.alert('Error', 'Chat not initialized');
+        return;
+      }
+
+      const messageId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const textBytes = new TextEncoder().encode(paymentMessage);
+      const { ciphertext, nonce } = encryptBytes(textBytes, sessionKey);
+
+      await db.runAsync(
+        'INSERT INTO messages (id, consent_id, sender, encrypted_data, nonce, timestamp) VALUES (?, ?, ?, ?, ?, ?)',
+        [
+          messageId,
+          consent.id,
+          wallet.address,
+          JSON.stringify(Array.from(ciphertext)),
+          JSON.stringify(Array.from(nonce)),
+          Date.now(),
+        ]
+      );
+
+      const newMessage: Message = {
+        id: messageId,
+        sender: wallet.address,
+        text: paymentMessage,
+        timestamp: Date.now(),
+        encrypted: true,
+      };
+      setMessages((prev) => [...prev, newMessage]);
+      
+      const amountStr = paymentAmount;
+      setPaymentAmount('');
+      setShowPaymentModal(false);
+      Alert.alert('Payment Request Sent', `${amountStr} ETH payment request sent to ${counterpartyName}`);
+    } catch (error) {
+      console.error('[Chat] Failed to send payment request:', error);
+      Alert.alert('Error', 'Failed to send payment request');
+    }
+  }
+
+  function handleViewConsentDetails() {
+    setShowMenu(false);
+    onClose();
+  }
+
+  function handleClearChat() {
+    setShowMenu(false);
+    Alert.alert(
+      'Clear Chat',
+      'Are you sure you want to delete all messages in this chat?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (!db) return;
+              await db.runAsync('DELETE FROM messages WHERE consent_id = ?', [consent.id]);
+              setMessages([]);
+              Alert.alert('Chat Cleared', 'All messages have been deleted');
+            } catch (error) {
+              console.error('[Chat] Failed to clear chat:', error);
+              Alert.alert('Error', 'Failed to clear chat');
+            }
+          }
+        }
+      ]
+    );
+  }
+
   function renderMessage({ item, index }: { item: Message; index: number }) {
     const isMe = item.sender === wallet.address;
     const showAvatar = index === 0 || messages[index - 1].sender !== item.sender;
@@ -315,10 +412,108 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
               End-to-end encrypted
             </Text>
           </View>
-          <TouchableOpacity style={styles.moreButton}>
+          <TouchableOpacity style={styles.moreButton} onPress={handleMenuPress}>
             <Ionicons name="ellipsis-vertical" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
+
+        {/* Dropdown Menu */}
+        {showMenu && (
+          <View style={[styles.menuOverlay, { backgroundColor: 'rgba(0, 0, 0, 0.3)' }]}>
+            <TouchableOpacity
+              style={styles.menuBackdrop}
+              activeOpacity={1}
+              onPress={() => setShowMenu(false)}
+            >
+              <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleRequestPayment}
+                >
+                  <Ionicons name="wallet" size={20} color={colors.primary} />
+                  <Text style={[styles.menuItemText, { color: colors.text }]}>Request Payment</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleViewConsentDetails}
+                >
+                  <Ionicons name="document-text" size={20} color={colors.textSecondary} />
+                  <Text style={[styles.menuItemText, { color: colors.text }]}>View Consent Details</Text>
+                </TouchableOpacity>
+                
+                <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+                
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleClearChat}
+                >
+                  <Ionicons name="trash-outline" size={20} color={colors.error} />
+                  <Text style={[styles.menuItemText, { color: colors.error }]}>Clear Chat</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Payment Request Modal */}
+        {showPaymentModal && (
+          <View style={[styles.menuOverlay, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]}>
+            <TouchableOpacity
+              style={styles.menuBackdrop}
+              activeOpacity={1}
+              onPress={() => setShowPaymentModal(false)}
+            >
+              <View style={[styles.paymentModal, { backgroundColor: colors.surface }]}>
+                <View style={styles.paymentHeader}>
+                  <Text style={[styles.paymentTitle, { color: colors.text }]}>Request Payment</Text>
+                  <TouchableOpacity onPress={() => setShowPaymentModal(false)}>
+                    <Ionicons name="close" size={24} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+                
+                <View style={styles.paymentBody}>
+                  <Text style={[styles.paymentLabel, { color: colors.textSecondary }]}>
+                    Request ETH from {counterpartyName}
+                  </Text>
+                  
+                  <View style={[styles.amountInput, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                    <TextInput
+                      style={[styles.amountInputText, { color: colors.text }]}
+                      value={paymentAmount}
+                      onChangeText={setPaymentAmount}
+                      placeholder="0.00"
+                      placeholderTextColor={colors.textSecondary}
+                      keyboardType="decimal-pad"
+                      autoFocus
+                    />
+                    <Text style={[styles.amountUnit, { color: colors.textSecondary }]}>ETH</Text>
+                  </View>
+                  
+                  <Text style={[styles.paymentHint, { color: colors.textSecondary }]}>
+                    The recipient will be notified and can approve the payment
+                  </Text>
+                </View>
+                
+                <View style={styles.paymentActions}>
+                  <TouchableOpacity
+                    style={[styles.paymentButton, { backgroundColor: colors.border }]}
+                    onPress={() => setShowPaymentModal(false)}
+                  >
+                    <Text style={[styles.paymentButtonText, { color: colors.text }]}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.paymentButton, { backgroundColor: colors.primary }]}
+                    onPress={sendPaymentRequest}
+                    disabled={!paymentAmount.trim()}
+                  >
+                    <Text style={[styles.paymentButtonText, styles.paymentButtonPrimary]}>Request Payment</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Messages List */}
         {isLoading ? (
@@ -593,6 +788,118 @@ function createStyles(colors: any) {
       height: 36,
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    menuOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 1000,
+    },
+    menuBackdrop: {
+      flex: 1,
+      justifyContent: 'flex-end',
+    },
+    menuContainer: {
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingBottom: Platform.OS === 'ios' ? 20 : 16,
+      paddingTop: 8,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 10,
+    },
+    menuItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+    },
+    menuItemText: {
+      fontSize: 16,
+      marginLeft: 12,
+    },
+    menuDivider: {
+      height: 1,
+      marginVertical: 4,
+    },
+    paymentModal: {
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingBottom: Platform.OS === 'ios' ? 32 : 20,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 10,
+      elevation: 10,
+      maxHeight: '70%',
+    },
+    paymentHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingTop: 20,
+      paddingBottom: 16,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    paymentTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    paymentBody: {
+      paddingHorizontal: 20,
+      paddingTop: 20,
+      paddingBottom: 16,
+    },
+    paymentLabel: {
+      fontSize: 14,
+      marginBottom: 12,
+    },
+    amountInput: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      height: 56,
+      marginBottom: 8,
+    },
+    amountInputText: {
+      flex: 1,
+      fontSize: 24,
+      fontWeight: '600',
+    },
+    amountUnit: {
+      fontSize: 16,
+      marginLeft: 8,
+    },
+    paymentHint: {
+      fontSize: 12,
+      fontStyle: 'italic',
+    },
+    paymentActions: {
+      flexDirection: 'row',
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      gap: 12,
+    },
+    paymentButton: {
+      flex: 1,
+      borderRadius: 12,
+      paddingVertical: 16,
+      alignItems: 'center',
+    },
+    paymentButtonText: {
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    paymentButtonPrimary: {
+      color: '#fff',
     },
   });
 }
