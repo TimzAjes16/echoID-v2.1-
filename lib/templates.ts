@@ -4,6 +4,7 @@ export interface TemplateContent {
   title: string;
   text: string;
   feeDisclosure: string;
+  requiredPhrase: string; // The phrase user must say during voice recording
 }
 
 const SEX_NDA_TEXT = `SEXUAL ACTIVITY NON-DISCLOSURE AGREEMENT
@@ -75,26 +76,31 @@ export const templates: Record<ConsentTemplate, TemplateContent> = {
     title: 'Sex NDA',
     text: SEX_NDA_TEXT,
     feeDisclosure: FEE_DISCLOSURE,
+    requiredPhrase: 'I consent willingly and voluntarily to this agreement without coercion or pressure',
   },
   nda: {
     title: 'Standard NDA',
     text: NDA_TEXT,
     feeDisclosure: FEE_DISCLOSURE,
+    requiredPhrase: 'I agree to this non-disclosure agreement willingly and without coercion',
   },
   creative: {
     title: 'Creative Collaboration',
     text: CREATIVE_TEXT,
     feeDisclosure: FEE_DISCLOSURE,
+    requiredPhrase: 'I agree to this creative collaboration agreement voluntarily and freely',
   },
   collab: {
     title: 'Business Collaboration',
     text: COLLAB_TEXT,
     feeDisclosure: FEE_DISCLOSURE,
+    requiredPhrase: 'I consent to this business collaboration agreement of my own free will',
   },
   conversation: {
     title: 'Conversation Confidentiality',
     text: CONVERSATION_TEXT,
     feeDisclosure: FEE_DISCLOSURE,
+    requiredPhrase: 'I agree to maintain confidentiality of our conversations willingly and without pressure',
   },
 };
 
