@@ -1,8 +1,11 @@
 import { Expo } from 'expo-server-sdk';
 import { getPool } from '../db/index.js';
 
+// Support both EXPO_TOKEN and EXPO_ACCESS_TOKEN for compatibility
+const expoToken = process.env.EXPO_TOKEN || process.env.EXPO_ACCESS_TOKEN;
+
 const expo = new Expo({
-  accessToken: process.env.EXPO_ACCESS_TOKEN, // Optional, for better rate limits
+  accessToken: expoToken, // Expo PAT for authenticated API access
 });
 
 const pool = getPool();

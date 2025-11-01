@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, useColorScheme, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useStore } from '../../state/useStore';
 import { Ionicons } from '@expo/vector-icons';
 import { getThemeColors, type ThemeMode } from '../../lib/theme';
+import { runCompleteExpoTokenTest } from '../../lib/testExpoToken';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -116,6 +117,45 @@ export default function SettingsScreen() {
             thumbColor={colors.surface}
           />
         </View>
+
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={async () => {
+            setTestingExpoToken(true);
+            try {
+              const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+              const results = await runCompleteExpoTokenTest(API_BASE_URL);
+              
+              const successCount = [
+                results.pushTokenTest.success,
+                results.backendConfigTest.success,
+                results.sendNotificationTest.success,
+              ].filter(Boolean).length;
+
+              Alert.alert(
+                'Expo Token Test Results',
+                `Tests completed: ${successCount}/3 passed\n\n` +
+                `Push Token: ${results.pushTokenTest.success ? '✅' : '❌'} ${results.pushTokenTest.error || results.pushTokenTest.token?.substring(0, 20) + '...'}\n` +
+                `Backend Config: ${results.backendConfigTest.success ? '✅' : '❌'} ${results.backendConfigTest.error || 'OK'}\n` +
+                `Send Notification: ${results.sendNotificationTest.success ? '✅' : '❌'} ${results.sendNotificationTest.error || 'Sent'}`,
+                [{ text: 'OK' }]
+              );
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Failed to run test');
+            } finally {
+              setTestingExpoToken(false);
+            }
+          }}
+          disabled={testingExpoToken}
+        >
+          <Ionicons name="flash-outline" size={24} color={colors.text} />
+          <Text style={styles.settingLabel}>Test Expo Token</Text>
+          {testingExpoToken ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          )}
+        </TouchableOpacity>
       </View>
 
       <View style={styles.section}>

@@ -13,6 +13,7 @@ import notificationRoutes from './routes/notifications.js';
 import configRoutes from './routes/config.js';
 import transactionRoutes from './routes/transactions.js';
 import testUserRoutes from './routes/testUsers.js';
+import testExpoTokenRoutes from './routes/test-expo-token.js';
 
 dotenv.config();
 
@@ -50,6 +51,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/test-users', testUserRoutes);
+app.use('/api/test-expo-token', testExpoTokenRoutes);
 
 // Error handling
 app.use(errorHandler);
