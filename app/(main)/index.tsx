@@ -12,7 +12,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { consents, consentRequests, loadConfig, loadProfile, loadDeviceKeypair, addConsentRequest, themeMode } = useStore();
+  const { consents, consentRequests, loadConfig, loadProfile, loadDeviceKeypair, addConsentRequest, loadConsentRequests, themeMode } = useStore();
   const systemColorScheme = useColorScheme();
   const colors = getThemeColors(themeMode, systemColorScheme);
   const insets = useSafeAreaInsets();
@@ -23,6 +23,7 @@ export default function HomeScreen() {
     loadConfig();
     loadProfile();
     loadDeviceKeypair();
+    loadConsentRequests(); // Load persisted consent requests
     requestNotificationPermissions();
 
     // Setup notification listener for consent requests

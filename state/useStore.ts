@@ -90,6 +90,7 @@ interface AppState {
 }
 
 const PROFILE_STORAGE_KEY = 'profile';
+const CONSENT_REQUESTS_STORAGE_KEY = 'consent_requests';
 
 export const useStore = create<AppState>((set, get) => ({
   // Initial state
@@ -273,20 +274,55 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   // Consent Request actions
-  addConsentRequest: (request: ConsentRequest) => {
-    set((state) => ({
-      consentRequests: [...state.consentRequests, request],
-    }));
+  addConsentRequest: async (request: ConsentRequest) => {
+    const newRequests = [...get().consentRequests, request];
+    set({ consentRequests: newRequests });
+    
+    // Persist to SecureStore
+    try {
+      await SecureStore.setItemAsync(
+        CONSENT_REQUESTS_STORAGE_KEY,
+        JSON.stringify(newRequests)
+      );
+      console.log(`[Store] Consent request persisted: ${request.id} (to @${request.consentData?.counterpartyHandle || 'unknown'})`);
+    } catch (error) {
+      console.error('[Store] Failed to persist consent requests:', error);
+    }
   },
 
-  removeConsentRequest: (id: string) => {
-    set((state) => ({
-      consentRequests: state.consentRequests.filter((r) => r.id !== id),
-    }));
+  removeConsentRequest: async (id: string) => {
+    const newRequests = get().consentRequests.filter((r) => r.id !== id);
+    set({ consentRequests: newRequests });
+    
+    // Persist to SecureStore
+    try {
+      await SecureStore.setItemAsync(
+        CONSENT_REQUESTS_STORAGE_KEY,
+        JSON.stringify(newRequests)
+      );
+      console.log(`[Store] Consent request removed and persisted: ${id}`);
+    } catch (error) {
+      console.error('[Store] Failed to persist consent requests:', error);
+    }
   },
 
   getConsentRequest: (id: string) => {
     return get().consentRequests.find((r) => r.id === id);
+  },
+  
+  loadConsentRequests: async () => {
+    try {
+      const stored = await SecureStore.getItemAsync(CONSENT_REQUESTS_STORAGE_KEY);
+      if (stored) {
+        const requests = JSON.parse(stored) as ConsentRequest[];
+        set({ consentRequests: requests });
+        console.log(`[Store] Loaded ${requests.length} consent requests from storage`);
+        return requests;
+      }
+    } catch (error) {
+      console.error('[Store] Failed to load consent requests:', error);
+    }
+    return [];
   },
 
   // Device keypair
