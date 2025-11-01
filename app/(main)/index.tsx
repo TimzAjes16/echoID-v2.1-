@@ -72,6 +72,7 @@ export default function HomeScreen() {
             <Text style={styles.newButtonText}>+ New Consent</Text>
           </TouchableOpacity>
         </View>
+        </View>
       </SafeAreaView>
 
       {consents.length === 0 ? (
