@@ -452,6 +452,8 @@ export async function getWalletBalance(
   chainId: number = DEFAULT_CHAIN_ID,
   handle?: string
 ): Promise<string> {
+  console.log(`[getWalletBalance] Called with:`, { address, chainId, handle });
+  
   // Check for test wallet balance first (development only)
   try {
     const { getTestWalletBalance } = await import('./testWalletBalances');
@@ -459,19 +461,25 @@ export async function getWalletBalance(
     if (testBalance !== null) {
       console.log(`[TEST] Using test balance for ${address}${handle ? ` (@${handle})` : ''}: ${testBalance} ETH`);
       return testBalance;
+    } else {
+      console.log(`[TEST] No test balance found for ${address}${handle ? ` (@${handle})` : ''}`);
     }
   } catch (error) {
-    // Ignore errors from test wallet balance check
+    console.error('[getWalletBalance] Error checking test balance:', error);
+    // Continue to blockchain check
   }
 
   // Fetch real balance from blockchain
   const publicClient = getPublicClient(chainId);
   
   try {
+    console.log(`[getWalletBalance] Fetching from blockchain for ${address}`);
     const balance = await publicClient.getBalance({ address });
-    return formatEther(balance);
+    const balanceEth = formatEther(balance);
+    console.log(`[getWalletBalance] Blockchain balance: ${balanceEth} ETH`);
+    return balanceEth;
   } catch (error) {
-    console.error('Failed to get wallet balance:', error);
+    console.error('[getWalletBalance] Failed to get wallet balance:', error);
     throw new Error('Failed to fetch wallet balance');
   }
 }

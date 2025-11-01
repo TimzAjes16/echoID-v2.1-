@@ -43,13 +43,20 @@ export function getTestWalletAddress(handle: string): string | null {
  * Returns null if not a test wallet or in production
  */
 export function getTestWalletBalance(address: string, chainId: number = 8453, handle?: string): string | null {
+  console.log(`[getTestWalletBalance] Checking:`, { address, chainId, handle });
+  
   // First check by handle - if user is test user, return their test balance
   if (handle) {
     const handleLower = handle.toLowerCase().trim();
+    console.log(`[getTestWalletBalance] Checking by handle: ${handleLower}`);
     const testWalletAddress = getTestWalletAddress(handleLower);
+    console.log(`[getTestWalletBalance] Test wallet address for handle:`, testWalletAddress);
+    
     if (testWalletAddress) {
       const handleBalance = TEST_WALLET_BALANCES[testWalletAddress.toLowerCase()];
+      console.log(`[getTestWalletBalance] Handle balance found:`, handleBalance);
       if (handleBalance && handleBalance.chainId === chainId) {
+        console.log(`[getTestWalletBalance] Returning handle balance: ${handleBalance.balanceETH} ETH`);
         return handleBalance.balanceETH;
       }
     }
@@ -57,11 +64,15 @@ export function getTestWalletBalance(address: string, chainId: number = 8453, ha
 
   // Check by address (fallback)
   const addressLower = address.toLowerCase();
+  console.log(`[getTestWalletBalance] Checking by address: ${addressLower}`);
   const testBalance = TEST_WALLET_BALANCES[addressLower];
+  console.log(`[getTestWalletBalance] Address balance found:`, testBalance);
   if (testBalance && testBalance.chainId === chainId) {
+    console.log(`[getTestWalletBalance] Returning address balance: ${testBalance.balanceETH} ETH`);
     return testBalance.balanceETH;
   }
 
+  console.log(`[getTestWalletBalance] No test balance found`);
   return null;
 }
 

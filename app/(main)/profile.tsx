@@ -36,15 +36,27 @@ export default function ProfileScreen() {
   }, [wallet.address, wallet.chainId, profile.handle]);
 
   async function loadWalletBalance() {
-    if (!wallet.address) return;
+    if (!wallet.address) {
+      console.log('[Profile] No wallet address, skipping balance load');
+      return;
+    }
     
     setIsLoadingBalance(true);
     try {
+      const currentHandle = profile?.handle?.trim();
+      console.log('[Profile] Loading balance:', {
+        address: wallet.address,
+        chainId: wallet.chainId || 8453,
+        handle: currentHandle || 'none',
+      });
+      
       const balanceWei = await getWalletBalance(
         wallet.address as Address,
         wallet.chainId || 8453,
-        profile.handle || undefined
+        currentHandle || undefined
       );
+      
+      console.log('[Profile] Balance loaded:', balanceWei);
       setBalance(balanceWei);
       
       // Also fetch USD conversion
@@ -56,7 +68,7 @@ export default function ProfileScreen() {
         console.error('Failed to fetch USD conversion:', error);
       }
     } catch (error: any) {
-      console.error('Failed to load wallet balance:', error);
+      console.error('[Profile] Failed to load wallet balance:', error);
       setBalance(null);
       setBalanceUSD(null);
     } finally {

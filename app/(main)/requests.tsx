@@ -12,23 +12,31 @@ export default function ConsentRequestsScreen() {
 
   // Filter requests to only show those meant for the current user (recipient)
   // Check if current user's handle matches the counterpartyHandle in the request
-  // OR if it's an older format request without counterpartyHandle, check against fromHandle
   const currentHandle = profile?.handle?.trim().toLowerCase();
   
+  if (!currentHandle) {
+    console.warn('[RequestsScreen] No current handle, cannot filter requests');
+  }
+  
   const filteredRequests = consentRequests.filter((req) => {
-    // If request has counterpartyHandle in consentData, check if it matches current user
-    const recipientHandle = req.consentData?.counterpartyHandle?.toLowerCase();
+    if (!currentHandle) return false;
     
-    // Request is for current user if:
-    // 1. The recipientHandle (in consentData) matches current handle (new format)
-    // 2. OR if no counterpartyHandle, it's a legacy request (keep it for now)
-    if (recipientHandle) {
-      return recipientHandle === currentHandle;
-    }
-    // Legacy format: if fromHandle doesn't match current user, assume it's for them
-    // (In old format, if you didn't send it, you received it)
+    // The recipient is stored in consentData.counterpartyHandle
+    const recipientHandle = req.consentData?.counterpartyHandle?.toLowerCase();
     const fromHandle = req.fromHandle?.toLowerCase();
-    return fromHandle !== currentHandle;
+    
+    // Request is for current user if recipientHandle matches current handle
+    if (recipientHandle) {
+      const isForCurrentUser = recipientHandle === currentHandle;
+      console.log(`[RequestsScreen] Request ${req.id}: recipient=${recipientHandle}, current=${currentHandle}, match=${isForCurrentUser}`);
+      return isForCurrentUser;
+    }
+    
+    // Legacy fallback: if no counterpartyHandle, check if fromHandle is different
+    // (if you didn't send it, you received it)
+    const isNotFromCurrentUser = fromHandle !== currentHandle;
+    console.log(`[RequestsScreen] Request ${req.id}: no recipientHandle, fromHandle=${fromHandle}, current=${currentHandle}, showing=${isNotFromCurrentUser}`);
+    return isNotFromCurrentUser;
   });
 
   // Deduplicate filtered consent requests by ID to prevent duplicate key errors
@@ -43,20 +51,25 @@ export default function ConsentRequestsScreen() {
     return acc;
   }, [] as ConsentRequest[]);
   
-  // Debug logging
-  if (consentRequests.length > 0) {
-    console.log('[RequestsScreen] Request filtering:', {
-      totalRequests: consentRequests.length,
-      currentHandle,
-      filteredCount: filteredRequests.length,
-      uniqueCount: uniqueConsentRequests.length,
-      requests: consentRequests.map(r => ({
-        id: r.id,
-        fromHandle: r.fromHandle,
-        recipientHandle: r.consentData?.counterpartyHandle,
-      })),
-    });
-  }
+  // Debug logging - always log to help diagnose issues
+  console.log('[RequestsScreen] Request state:', {
+    totalRequests: consentRequests.length,
+    currentHandle: currentHandle || 'NOT SET',
+    profileHandle: profile?.handle,
+    filteredCount: filteredRequests.length,
+    uniqueCount: uniqueConsentRequests.length,
+    allRequests: consentRequests.map(r => ({
+      id: r.id,
+      fromHandle: r.fromHandle,
+      recipientHandle: r.consentData?.counterpartyHandle,
+      hasConsentData: !!r.consentData,
+    })),
+    filteredRequests: filteredRequests.map(r => ({
+      id: r.id,
+      fromHandle: r.fromHandle,
+      recipientHandle: r.consentData?.counterpartyHandle,
+    })),
+  });
 
   async function handleAccept(requestId: string) {
     setProcessing(requestId);

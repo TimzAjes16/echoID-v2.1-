@@ -126,35 +126,31 @@ export async function createConsentRequest(
       isTestUser: isTestUser(counterpartyHandle),
     });
     
-    // CRITICAL: Only add request to store if the counterparty (recipient) is currently logged in
+    // CRITICAL: For test users, ALWAYS store the request (they can switch users in mock mode)
     // The request should only appear in the recipient's requests list, not the sender's
-    if (currentLoggedInHandle === targetHandle) {
-      // Counterparty is logged in - add request to THEIR store only
+    if (isTestUser(counterpartyHandle)) {
+      // For test users, ALWAYS store the request so it appears when they log in
+      storeState.addConsentRequest(request);
+      console.log(`[MOCK] Request stored for test user @${targetHandle} (from @${request.fromHandle})`);
+      
+      if (currentLoggedInHandle === targetHandle) {
+        // Recipient is logged in - send notification
+        await sendConsentRequestNotification(request);
+        console.log(`[MOCK] Test user @${targetHandle} is logged in - notification sent`);
+      } else {
+        console.log(`[MOCK] Test user @${targetHandle} not logged in - request will appear when they log in`);
+      }
+    } else if (currentLoggedInHandle === targetHandle) {
+      // Non-test user is logged in - add request to THEIR store only
       storeState.addConsentRequest(request);
       console.log(`[MOCK] Request stored for logged-in recipient @${targetHandle} (from @${request.fromHandle})`);
       
       // Send notification to recipient
       await sendConsentRequestNotification(request);
       console.log(`[MOCK] Notification sent to @${targetHandle}`);
-    } else if (isTestUser(counterpartyHandle)) {
-      // For test users, store the request so it appears when they log in
-      // Always store it for test users (they're always available in mock mode)
-      storeState.addConsentRequest(request);
-      if (currentLoggedInHandle === targetHandle) {
-        await sendConsentRequestNotification(request);
-        console.log(`[MOCK] Test user @${targetHandle} is logged in - request stored and notified`);
-      } else {
-        console.log(`[MOCK] Test user @${targetHandle} not logged in - request stored for when they log in`);
-      }
     } else {
-      // Non-test user, backend not configured
-      if (currentLoggedInHandle === targetHandle) {
-        storeState.addConsentRequest(request);
-        await sendConsentRequestNotification(request);
-        console.log(`[MOCK] User @${targetHandle} is logged in - request stored`);
-      } else {
-        console.log(`[MOCK] User @${targetHandle} not logged in - backend required for notification`);
-      }
+      // Non-test user not logged in, backend not configured
+      console.log(`[MOCK] User @${targetHandle} not logged in and not a test user - backend required`);
     }
   }
 }
