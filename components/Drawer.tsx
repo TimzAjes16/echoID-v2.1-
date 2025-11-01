@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useStore } from '../state/useStore';
 import { Ionicons } from '@expo/vector-icons';
 import { getThemeColors } from '../lib/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface DrawerProps {
   visible: boolean;
@@ -13,8 +14,9 @@ export default function Drawer({ visible, onClose }: DrawerProps) {
   const { wallet, profile, disconnectWallet, themeMode } = useStore();
   const systemColorScheme = useColorScheme();
   const colors = getThemeColors(themeMode, systemColorScheme);
+  const insets = useSafeAreaInsets();
   const router = useRouter();
-  const styles = createStyles(colors);
+  const styles = createStyles(colors, insets);
 
   const handleLogout = async () => {
     try {
@@ -145,7 +147,7 @@ export default function Drawer({ visible, onClose }: DrawerProps) {
   );
 }
 
-function createStyles(colors: ReturnType<typeof getThemeColors>) {
+function createStyles(colors: ReturnType<typeof getThemeColors>, insets: { top: number }) {
   return StyleSheet.create({
     overlay: {
       flex: 1,
@@ -167,7 +169,7 @@ function createStyles(colors: ReturnType<typeof getThemeColors>) {
     },
     profileSection: {
       padding: 20,
-      paddingTop: 50,
+      paddingTop: Math.max(insets.top + 20, 60),
       alignItems: 'center',
       backgroundColor: colors.surface,
     },
