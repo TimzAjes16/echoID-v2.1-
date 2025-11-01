@@ -53,7 +53,7 @@ export default function HomeScreen() {
           >
             <Ionicons name="menu" size={22} color={colors.text} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>My Badges</Text>
+          <Text style={[styles.title, { color: colors.text }]}>My Contracts</Text>
         <View style={styles.headerActions}>
           {consentRequests.length > 0 && (
             <TouchableOpacity
