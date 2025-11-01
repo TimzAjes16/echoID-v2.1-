@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useStore } from '../../state/useStore';
 import BadgeCard from '../../components/BadgeCard';
@@ -7,6 +7,8 @@ import Drawer from '../../components/Drawer';
 import { Ionicons } from '@expo/vector-icons';
 import { setupNotificationListener, requestNotificationPermissions } from '../../lib/notifications';
 import { ConsentRequest } from '../../state/useStore';
+import { getThemeColors } from '../../lib/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const router = useRouter();
