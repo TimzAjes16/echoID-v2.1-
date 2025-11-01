@@ -10,6 +10,7 @@ export interface Consent {
   id: string;
   consentId: bigint;
   counterparty: string;
+  counterpartyHandle?: string;
   template: string;
   createdAt: number;
   lockedUntil: number; // timestamp
@@ -22,6 +23,16 @@ export interface Consent {
   geoHash: string;
   utcHash: string;
   coercionLevel: number;
+  status: 'pending' | 'accepted' | 'rejected' | 'active';
+}
+
+export interface ConsentRequest {
+  id: string;
+  fromHandle: string;
+  fromAddress: string;
+  template: string;
+  requestedAt: number;
+  consentData: any; // Full consent creation data
 }
 
 export interface WalletState {
@@ -59,6 +70,12 @@ interface AppState {
   updateConsent: (id: string, updates: Partial<Consent>) => void;
   getConsent: (id: string) => Consent | undefined;
   
+  // Consent Requests (pending requests from others)
+  consentRequests: ConsentRequest[];
+  addConsentRequest: (request: ConsentRequest) => void;
+  removeConsentRequest: (id: string) => void;
+  getConsentRequest: (id: string) => ConsentRequest | undefined;
+  
   // Device keypair
   deviceKeypair: { publicKey: Uint8Array; secretKey: Uint8Array } | null;
   loadDeviceKeypair: () => Promise<void>;
@@ -80,6 +97,7 @@ export const useStore = create<AppState>((set, get) => ({
     devicePubKey: null,
   },
   consents: [],
+  consentRequests: [],
   deviceKeypair: null,
 
   // Wallet actions
@@ -218,6 +236,23 @@ export const useStore = create<AppState>((set, get) => ({
 
   getConsent: (id: string) => {
     return get().consents.find((c) => c.id === id);
+  },
+
+  // Consent Request actions
+  addConsentRequest: (request: ConsentRequest) => {
+    set((state) => ({
+      consentRequests: [...state.consentRequests, request],
+    }));
+  },
+
+  removeConsentRequest: (id: string) => {
+    set((state) => ({
+      consentRequests: state.consentRequests.filter((r) => r.id !== id),
+    }));
+  },
+
+  getConsentRequest: (id: string) => {
+    return get().consentRequests.find((r) => r.id === id);
   },
 
   // Device keypair

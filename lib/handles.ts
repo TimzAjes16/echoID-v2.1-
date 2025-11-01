@@ -90,6 +90,17 @@ export async function claimHandle(
  * Resolve handle to wallet address and device pubkey
  */
 export async function resolveHandle(handle: string): Promise<HandleMapping | null> {
+  // Check test users first
+  const { getTestUser } = await import('./testUsers');
+  const testUser = getTestUser(handle);
+  if (testUser) {
+    return {
+      handle: testUser.handle,
+      walletAddress: testUser.walletAddress,
+      devicePubKey: testUser.devicePubKey,
+    };
+  }
+
   // Mock mode for MVP
   if (USE_MOCK_MODE) {
     // In mock mode, we don't resolve handles - return null to indicate handle doesn't exist

@@ -11,6 +11,8 @@ import { analyzeCoercion, type AudioAnalysis } from '../../../lib/coercion';
 import { createConsent, UnlockMode, formatFee } from '../../../lib/sdk';
 import { Address } from 'viem';
 import { resolveHandle } from '../../../lib/handles';
+import { createConsentRequest } from '../../../lib/consentRequests';
+import { isTestUser } from '../../../lib/testUsers';
 
 type Step = 'template' | 'counterparty' | 'voice' | 'selfie' | 'review' | 'processing';
 
@@ -83,44 +85,68 @@ export default function NewConsentScreen() {
       
       const coercionLevel = audioAnalysis ? analyzeCoercion(audioAnalysis) : 0;
 
-      // Create consent on-chain
-      const consentId = await createConsent(
-        wallet,
-        {
-          voiceHash,
-          faceHash,
-          deviceHash,
-          geoHash,
-          utcHash,
-          coercionLevel,
-          counterparty: counterpartyAddress as Address,
-          unlockMode,
-          unlockWindow: unlockMode === UnlockMode.WINDOWED ? 3600 : undefined,
-        },
-        config.protocolFeeWei
-      );
-
-      // Add to local store
-      const consent = {
-        id: `${Date.now()}-${Math.random()}`,
-        consentId,
-        counterparty: counterpartyAddress,
-        template: selectedTemplate,
-        createdAt: Date.now(),
-        lockedUntil: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
-        unlockRequested: false,
-        unlockApproved: false,
-        isUnlocked: false,
+      const consentData = {
         voiceHash,
         faceHash,
         deviceHash,
         geoHash,
         utcHash,
         coercionLevel,
+        template: selectedTemplate,
+        unlockMode,
+        unlockWindow: unlockMode === UnlockMode.WINDOWED ? 3600 : undefined,
       };
 
-      addConsent(consent);
-      router.replace('/(main)');
+      // Check if counterparty is a test user - if so, send request instead of creating immediately
+      if (isTestUser(counterpartyHandle)) {
+        // Send consent request to counterparty (they need to accept first)
+        await createConsentRequest(
+          counterpartyHandle,
+          counterpartyAddress,
+          selectedTemplate,
+          consentData
+        );
+
+        Alert.alert(
+          'Request Sent',
+          `Consent request sent to @${counterpartyHandle}. They will receive a notification and must accept before the consent is created.`,
+          [
+            {
+              text: 'OK',
+              onPress: () => router.replace('/(main)'),
+            },
+          ]
+        );
+      } else {
+        // For non-test users or direct consent creation, create on-chain immediately
+        const consentId = await createConsent(
+          wallet,
+          {
+            ...consentData,
+            counterparty: counterpartyAddress as Address,
+          },
+          config.protocolFeeWei
+        );
+
+        // Add to local store
+        const consent = {
+          id: `${Date.now()}-${Math.random()}`,
+          consentId,
+          counterparty: counterpartyAddress,
+          counterpartyHandle: counterpartyHandle,
+          template: selectedTemplate,
+          createdAt: Date.now(),
+          lockedUntil: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+          unlockRequested: false,
+          unlockApproved: false,
+          isUnlocked: false,
+          status: 'active' as const,
+          ...consentData,
+        };
+
+        addConsent(consent);
+        router.replace('/(main)');
+      }
     } catch (error) {
       console.error('Failed to create consent:', error);
       Alert.alert('Error', 'Failed to create consent');

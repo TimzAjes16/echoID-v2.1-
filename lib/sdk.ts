@@ -1,4 +1,4 @@
-import { createPublicClient, createWalletClient, http, formatEther, parseEther, encodeFunctionData, Address } from 'viem';
+import { createPublicClient, createWalletClient, http, formatEther, parseEther, encodeFunctionData, decodeEventLog, Address } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 import type { SessionTypes } from '@walletconnect/types';
 import { sendTransaction } from './walletconnect';
@@ -238,9 +238,48 @@ export async function createConsent(
   const publicClient = getPublicClient(chainId);
   const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash as `0x${string}` });
 
-  // Extract consentId from receipt logs (simplified - in production, decode event)
-  // For MVP, return a mock ID based on transaction hash
-  const consentId = BigInt('0x' + txHash.slice(2, 18)); // Simplified extraction
+  // Extract consentId from receipt logs
+  // In production, decode the ConsentCreated event from the factory contract
+  // Event signature: ConsentCreated(uint256 indexed consentId, address indexed party1, address indexed party2)
+  try {
+    // Decode event logs
+    const eventAbi = {
+      name: 'ConsentCreated',
+      type: 'event',
+      inputs: [
+        { indexed: true, name: 'consentId', type: 'uint256' },
+        { indexed: true, name: 'party1', type: 'address' },
+        { indexed: true, name: 'party2', type: 'address' },
+      ],
+    } as const;
+
+    const logs = receipt.logs;
+    for (const log of logs) {
+      if (log.address.toLowerCase() === FACTORY_ADDRESS.toLowerCase()) {
+        // Try to decode the event
+        try {
+          const decoded = decodeEventLog({
+            abi: [eventAbi],
+            data: log.data,
+            topics: log.topics,
+          });
+          if (decoded.eventName === 'ConsentCreated') {
+            return decoded.args.consentId as bigint;
+          }
+        } catch {
+          // Event doesn't match, try next log
+          continue;
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to decode ConsentCreated event, using fallback:', error);
+  }
+
+  // Fallback: Extract from transaction hash (less reliable)
+  // In production, this should never be used - the event should always be decoded
+  const consentId = BigInt('0x' + txHash.slice(2, 18).padStart(16, '0'));
+  console.warn('[FALLBACK] Using transaction hash to derive consentId. This should not happen in production.');
   
   return consentId;
 }

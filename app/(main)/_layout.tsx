@@ -30,6 +30,10 @@ export default function MainLayout() {
         name="profile" 
         options={{ title: 'Profile' }} 
       />
+      <Stack.Screen 
+        name="requests" 
+        options={{ title: 'Consent Requests' }} 
+      />
     </Stack>
   );
 }
