@@ -1,13 +1,12 @@
-import { View, Text, StyleSheet, TouchableOpacity, Share, Image } from 'react-native';
-import QRCode from 'qrcode';
+import { View, Text, StyleSheet, TouchableOpacity, Share } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
 import { useEffect, useState } from 'react';
 import { useStore } from '../state/useStore';
 import { getDeviceKeypair } from '../lib/crypto';
-import * as FileSystem from 'expo-file-system';
 
 export default function QRCodeView() {
   const { wallet, profile } = useStore();
-  const [qrUri, setQrUri] = useState<string | null>(null);
+  const [qrData, setQrData] = useState<string | null>(null);
   const [devicePubKey, setDevicePubKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -28,20 +27,7 @@ export default function QRCodeView() {
         dp: pubKeyBase64,
       };
 
-      // Generate QR code as data URI
-      const dataUri = await QRCode.toDataURL(JSON.stringify(payload), {
-        width: 300,
-        margin: 2,
-      });
-
-      // Save to file system for React Native Image component
-      const filename = `${FileSystem.cacheDirectory}qr_${Date.now()}.png`;
-      const base64Data = dataUri.split(',')[1];
-      await FileSystem.writeAsStringAsync(filename, base64Data, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-
-      setQrUri(filename);
+      setQrData(JSON.stringify(payload));
       setDevicePubKey(pubKeyBase64);
     } catch (error) {
       console.error('Failed to generate QR code:', error);
@@ -60,7 +46,7 @@ export default function QRCodeView() {
     }
   }
 
-  if (!qrUri) {
+  if (!qrData) {
     return (
       <View style={styles.container}>
         <Text style={styles.loading}>Loading QR code...</Text>
@@ -74,7 +60,13 @@ export default function QRCodeView() {
       <Text style={styles.handle}>@{profile.handle}</Text>
       
       <View style={styles.qrContainer}>
-        <Image source={{ uri: qrUri }} style={styles.qrImage} />
+        <QRCode
+          value={qrData}
+          size={300}
+          color="#000000"
+          backgroundColor="#FFFFFF"
+          logo={undefined}
+        />
       </View>
 
       <TouchableOpacity style={styles.shareButton} onPress={shareQR}>
@@ -124,10 +116,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-  },
-  qrImage: {
-    width: 300,
-    height: 300,
   },
   shareButton: {
     backgroundColor: '#007AFF',
