@@ -8,15 +8,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { setupNotificationListener, requestNotificationPermissions } from '../../lib/notifications';
 import { ConsentRequest } from '../../state/useStore';
 import { getThemeColors } from '../../lib/theme';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { consents, consentRequests, loadConfig, loadProfile, loadDeviceKeypair, addConsentRequest, themeMode } = useStore();
   const systemColorScheme = useColorScheme();
   const colors = getThemeColors(themeMode, systemColorScheme);
+  const insets = useSafeAreaInsets();
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const styles = createStyles(colors);
+  const styles = createStyles(colors, insets);
 
   useEffect(() => {
     loadConfig();
@@ -44,7 +45,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.surface }]} edges={['top']}>
+      <View style={[styles.safeArea, { backgroundColor: colors.surface, paddingTop: Math.max(insets.top - 8, 0) }]}>
         <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
           <TouchableOpacity
             style={styles.menuButton}
@@ -73,7 +74,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
         </View>
-      </SafeAreaView>
+      </View>
 
       {consents.length === 0 ? (
         <View style={styles.empty}>
@@ -96,7 +97,7 @@ export default function HomeScreen() {
   );
 }
 
-function createStyles(colors: ReturnType<typeof getThemeColors>) {
+function createStyles(colors: ReturnType<typeof getThemeColors>, insets: { top: number }) {
   return StyleSheet.create({
   safeArea: {
     paddingBottom: 0,

@@ -1,39 +1,45 @@
 import { Stack } from 'expo-router';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
 import { useStore } from '../state/useStore';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { getThemeColors } from '../lib/theme';
 import { StyleSheet } from 'react-native';
 
-export default function RootLayout() {
-  const { themeMode, loadThemeMode } = useStore();
+function RootLayoutContent() {
+  const { themeMode } = useStore();
   const systemColorScheme = useColorScheme();
-
-  useEffect(() => {
-    loadThemeMode();
-  }, []);
+  const insets = useSafeAreaInsets();
 
   // Determine if dark mode should be active
   const isDark = themeMode === 'dark' || (themeMode === 'auto' && systemColorScheme === 'dark');
   const colors = getThemeColors(themeMode, systemColorScheme);
 
   return (
+    <View style={[styles.container, { backgroundColor: colors.surface, paddingTop: Math.max(insets.top - 8, 0) }]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.surface} />
+      <Stack screenOptions={{ headerShown: false }} />
+    </View>
+  );
+}
+
+export default function RootLayout() {
+  const { loadThemeMode } = useStore();
+
+  useEffect(() => {
+    loadThemeMode();
+  }, []);
+
+  return (
     <SafeAreaProvider>
-      <SafeAreaView 
-        style={[styles.safeArea, { backgroundColor: colors.surface }]} 
-        edges={['top']}
-      >
-        <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.surface} />
-        <Stack screenOptions={{ headerShown: false }} />
-      </SafeAreaView>
+      <RootLayoutContent />
     </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
   },
 });
