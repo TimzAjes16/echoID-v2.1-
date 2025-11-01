@@ -33,7 +33,7 @@ export default function ProfileScreen() {
     } else {
       setBalance(null);
     }
-  }, [wallet.address, wallet.chainId]);
+  }, [wallet.address, wallet.chainId, profile.handle]);
 
   async function loadWalletBalance() {
     if (!wallet.address) return;

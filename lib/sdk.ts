@@ -445,11 +445,26 @@ export function formatFee(feeWei: string, chainId: number = DEFAULT_CHAIN_ID): s
 
 /**
  * Get wallet balance
+ * For test wallets (like katie with 0.1 ETH), returns test balance in development mode
  */
 export async function getWalletBalance(
   address: Address,
-  chainId: number = DEFAULT_CHAIN_ID
+  chainId: number = DEFAULT_CHAIN_ID,
+  handle?: string
 ): Promise<string> {
+  // Check for test wallet balance first (development only)
+  try {
+    const { getTestWalletBalance } = await import('./testWalletBalances');
+    const testBalance = getTestWalletBalance(address, chainId, handle);
+    if (testBalance !== null) {
+      console.log(`[TEST] Using test balance for ${address}${handle ? ` (@${handle})` : ''}: ${testBalance} ETH`);
+      return testBalance;
+    }
+  } catch (error) {
+    // Ignore errors from test wallet balance check
+  }
+
+  // Fetch real balance from blockchain
   const publicClient = getPublicClient(chainId);
   
   try {
