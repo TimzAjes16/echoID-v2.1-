@@ -162,9 +162,12 @@ export async function acceptConsentRequest(request: ConsentRequest): Promise<Con
   // Check balance before attempting transaction
   try {
     const { getWalletBalance } = await import('./sdk');
+    const { useStore } = await import('../state/useStore');
+    const { profile } = useStore.getState();
     const balance = await getWalletBalance(
       wallet.address as any,
-      wallet.chainId || 8453
+      wallet.chainId || 8453,
+      profile?.handle || undefined
     );
     const balanceEth = parseFloat(balance);
     const feeEth = parseFloat(config.protocolFeeWei) / 1e18;

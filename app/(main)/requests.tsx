@@ -48,12 +48,14 @@ export default function ConsentRequestsScreen() {
         ? formatFee(config.protocolFeeWei, config.defaultChainId || 8453)
         : '0.001 ETH';
       
-      // Get current balance
+      // Get current balance (pass handle for test balance lookup)
+      const { profile } = useStore.getState();
       let currentBalance: string | null = null;
       try {
         currentBalance = await getWalletBalance(
           wallet.address as any,
-          wallet.chainId || 8453
+          wallet.chainId || 8453,
+          profile?.handle || undefined
         );
       } catch (error) {
         console.error('Failed to fetch balance:', error);
