@@ -92,6 +92,15 @@ export async function acceptConsentRequest(request: ConsentRequest): Promise<Con
 
   // Extract consent data from request
   const consentData = request.consentData;
+  
+  if (!consentData) {
+    throw new Error('Consent data is missing from request');
+  }
+
+  // Validate required fields
+  if (!consentData.voiceHash || !consentData.faceHash || !consentData.deviceHash) {
+    throw new Error('Invalid consent data: missing required verification hashes');
+  }
 
   // For MVP: The requester has already done their verification
   // The acceptor needs to do their own verification in a real flow
@@ -105,12 +114,12 @@ export async function acceptConsentRequest(request: ConsentRequest): Promise<Con
       voiceHash: consentData.voiceHash,
       faceHash: consentData.faceHash,
       deviceHash: consentData.deviceHash,
-      geoHash: consentData.geoHash,
-      utcHash: consentData.utcHash,
+      geoHash: consentData.geoHash || '0x0000000000000000000000000000000000000000000000000000000000000000',
+      utcHash: consentData.utcHash || '0x0000000000000000000000000000000000000000000000000000000000000000',
       coercionLevel: consentData.coercionLevel || 0,
       counterparty: request.fromAddress as any,
       unlockMode: consentData.unlockMode || UnlockMode.WINDOWED,
-      unlockWindow: consentData.unlockWindow,
+      unlockWindow: consentData.unlockWindow || 3600,
     },
     config.protocolFeeWei
   );
@@ -127,11 +136,11 @@ export async function acceptConsentRequest(request: ConsentRequest): Promise<Con
     unlockRequested: false,
     unlockApproved: false,
     isUnlocked: false,
-    voiceHash: consentData.voiceHash || '',
-    faceHash: consentData.faceHash || '',
-    deviceHash: consentData.deviceHash || '',
-    geoHash: consentData.geoHash || '',
-    utcHash: consentData.utcHash || '',
+    voiceHash: consentData.voiceHash,
+    faceHash: consentData.faceHash,
+    deviceHash: consentData.deviceHash,
+    geoHash: consentData.geoHash || '0x0000000000000000000000000000000000000000000000000000000000000000',
+    utcHash: consentData.utcHash || '0x0000000000000000000000000000000000000000000000000000000000000000',
     coercionLevel: consentData.coercionLevel || 0,
     status: 'active',
   };
