@@ -115,14 +115,28 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Wallet</Text>
-        <View style={styles.walletInfo}>
-          <Text style={styles.walletLabel}>Address:</Text>
-          <Text style={styles.walletValue}>{wallet.address}</Text>
-        </View>
-        <View style={styles.walletInfo}>
-          <Text style={styles.walletLabel}>Chain ID:</Text>
-          <Text style={styles.walletValue}>{wallet.chainId || 'Unknown'}</Text>
+        <Text style={styles.sectionTitle}>My Wallet</Text>
+        <View style={styles.walletCard}>
+          <View style={styles.walletInfo}>
+            <Text style={styles.walletLabel}>Wallet Address</Text>
+            <Text style={styles.walletValue} selectable>{wallet.address}</Text>
+          </View>
+          <View style={styles.walletInfo}>
+            <Text style={styles.walletLabel}>Network</Text>
+            <Text style={styles.walletValue}>
+              {wallet.chainId === 8453 ? 'Base Mainnet' : 
+               wallet.chainId === 84532 ? 'Base Sepolia' : 
+               wallet.chainId || 'Unknown'}
+            </Text>
+          </View>
+          {wallet.address && (
+            <View style={styles.qrSection}>
+              <Text style={styles.qrLabel}>Receive Funds</Text>
+              <View style={styles.qrContainer}>
+                <QRCodeView value={wallet.address} size={180} />
+              </View>
+            </View>
+          )}
         </View>
       </View>
 
@@ -190,20 +204,49 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
+  walletCard: {
+    marginTop: 8,
+  },
   walletInfo: {
-    flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: 20,
   },
   walletLabel: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666',
-    width: 80,
+    marginBottom: 6,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   walletValue: {
-    fontSize: 14,
-    fontWeight: '500',
-    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
     fontFamily: 'monospace',
+    color: '#333',
+    lineHeight: 22,
+  },
+  qrSection: {
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5EA',
+    alignItems: 'center',
+  },
+  qrLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 15,
+    fontWeight: '500',
+  },
+  qrContainer: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });
 

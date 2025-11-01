@@ -14,7 +14,8 @@ export default function ConsentRequestsScreen() {
     setProcessing(requestId);
     try {
       console.log('Attempting to accept request:', requestId);
-      const request = useStore.getState().getConsentRequest(requestId);
+      const { getConsentRequest, config } = useStore.getState();
+      const request = getConsentRequest(requestId);
       
       if (!request) {
         console.error('Request not found in store. Available requests:', 
@@ -28,6 +29,35 @@ export default function ConsentRequestsScreen() {
         fromAddress: request.fromAddress,
         hasConsentData: !!request.consentData,
       });
+
+      // Show payment confirmation before proceeding
+      const { formatFee } = await import('../../lib/sdk');
+      const feeAmount = config?.protocolFeeWei 
+        ? formatFee(config.protocolFeeWei, config.defaultChainId || 8453)
+        : '0.001 ETH';
+      
+      const confirmed = await new Promise<boolean>((resolve) => {
+        Alert.alert(
+          'Accept Consent Request',
+          `Accepting this consent request will:\n\n• Create consent on-chain\n• Mint your consent badge (NFT)\n• Pay protocol fee: ${feeAmount}\n\nContinue?`,
+          [
+            {
+              text: 'Cancel',
+              style: 'cancel',
+              onPress: () => resolve(false),
+            },
+            {
+              text: 'Accept & Pay',
+              onPress: () => resolve(true),
+            },
+          ]
+        );
+      });
+
+      if (!confirmed) {
+        setProcessing(null);
+        return;
+      }
 
       // Accept the consent request - this creates consent on-chain and mints NFT/Badge
       console.log('Calling acceptConsentRequest...');

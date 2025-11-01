@@ -21,12 +21,16 @@ export async function createConsentRequest(
     throw new Error('Wallet address not available');
   }
   
+  // Generate unique ID: timestamp + random string + first 4 chars of fromHandle for extra uniqueness
+  const timestamp = Date.now();
+  const randomStr = Math.random().toString(36).substring(2, 11);
+  const handlePrefix = fromHandle !== 'unknown' ? fromHandle.substring(0, 4).toLowerCase() : 'unk';
   const request: ConsentRequest = {
-    id: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    id: `req_${timestamp}_${handlePrefix}_${randomStr}`,
     fromHandle,
     fromAddress,
     template,
-    requestedAt: Date.now(), // Ensure timestamp is set
+    requestedAt: timestamp, // Ensure timestamp is set
     consentData: {
       ...consentData,
       counterpartyHandle,
