@@ -122,6 +122,11 @@ async function seedTestUsers(pool) {
       walletAddress: '0x8ba1f109551bD432803012645Hac136c808C817',
       devicePubKey: 'dGVzdF9kZXZpY2VfcHVia2V5X21pa2U=',
     },
+    {
+      handle: 'katie',
+      walletAddress: '0x9cA7a3B8F2D4e1F6a5B9C8D7E4F3A2B1C0D9E8F7',
+      devicePubKey: 'dGVzdF9kZXZpY2VfcHVia2V5X2thdGll',
+    },
   ];
 
   for (const user of testUsers) {

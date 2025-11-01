@@ -42,7 +42,8 @@ export default function ProfileScreen() {
     try {
       const balanceWei = await getWalletBalance(
         wallet.address as Address,
-        wallet.chainId || 8453
+        wallet.chainId || 8453,
+        profile.handle || undefined
       );
       setBalance(balanceWei);
       

@@ -23,6 +23,12 @@ export const TEST_USERS: TestUser[] = [
     devicePubKey: 'dGVzdF9kZXZpY2VfcHVia2V5X21pa2U',
     name: 'Mike',
   },
+  {
+    handle: 'katie',
+    walletAddress: '0x9cA7a3B8F2D4e1F6a5B9C8D7E4F3A2B1C0D9E8F7',
+    devicePubKey: 'dGVzdF9kZXZpY2VfcHVia2V5X2thdGll',
+    name: 'Katie',
+  },
 ];
 
 /**
