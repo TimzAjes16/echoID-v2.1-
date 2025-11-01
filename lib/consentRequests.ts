@@ -94,12 +94,22 @@ export async function acceptConsentRequest(request: ConsentRequest): Promise<Con
   const consentData = request.consentData;
   
   if (!consentData) {
+    console.error('Consent request data:', JSON.stringify(request, null, 2));
     throw new Error('Consent data is missing from request');
   }
 
-  // Validate required fields
-  if (!consentData.voiceHash || !consentData.faceHash || !consentData.deviceHash) {
-    throw new Error('Invalid consent data: missing required verification hashes');
+  // Validate required fields with better error messages
+  if (!consentData.voiceHash) {
+    console.error('Missing voiceHash in consentData:', Object.keys(consentData));
+    throw new Error('Invalid consent data: missing voiceHash');
+  }
+  if (!consentData.faceHash) {
+    console.error('Missing faceHash in consentData:', Object.keys(consentData));
+    throw new Error('Invalid consent data: missing faceHash');
+  }
+  if (!consentData.deviceHash) {
+    console.error('Missing deviceHash in consentData:', Object.keys(consentData));
+    throw new Error('Invalid consent data: missing deviceHash');
   }
 
   // For MVP: The requester has already done their verification
