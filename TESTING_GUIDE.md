@@ -56,25 +56,34 @@ WalletConnect provides a demo wallet perfect for testing WalletConnect integrati
 
 EchoID includes test users for testing consent requests and handle resolution.
 
-### Available Test Users
+### Available Test Users (in `lib/testUsers.ts`)
 
 1. **Sarah**
    - Handle: `sarah`
    - Wallet: `0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb`
-   - Use: Test consent requests, handle resolution
+   - Balance: **0.1 ETH**
+   - Use: Test consent requests, handle resolution, accepting requests
 
-2. **Mike**
+2. **Katie**
+   - Handle: `katie`
+   - Wallet: `0x9cA7a3B8F2D4e1F6a5B9C8D7E4F3A2B1C0D9E8F7`
+   - Balance: **0.1 ETH**
+   - Use: Test consent requests, handle resolution, accepting requests
+
+3. **Mike**
    - Handle: `mike`
    - Wallet: `0x8ba1f109551bD432803012645Hac136c22C19`
-   - Use: Test consent requests, handle resolution
+   - Balance: **0 ETH**
+   - Use: Test consent requests, handle resolution (insufficient balance for acceptance)
 
 ### Using Test Users
 
 **For Consent Requests:**
 1. Create a new consent
-2. Enter test user handle (`sarah` or `mike`) as counterparty
+2. Enter test user handle (`sarah`, `katie`, or `mike`) as counterparty
 3. Complete consent creation flow
 4. Test user should receive notification (if backend deployed)
+5. Log in as recipient to see request and accept (if they have balance)
 
 **For Handle Resolution:**
 1. Enter test user handle in search/resolution
@@ -131,7 +140,7 @@ See `EXPO_TOKEN_TESTING.md` for complete guide on testing Expo push notification
 2. **Create Consent:**
    - Navigate to "New Consent"
    - Select template (e.g., "Sex NDA")
-   - Enter counterparty handle (`sarah` or `mike`)
+   - Enter counterparty handle (`sarah`, `katie`, or `mike`)
    - Record voice with required phrase
    - Capture selfie
    - Review consent details
