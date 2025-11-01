@@ -21,6 +21,8 @@ import { getThemeColors } from '../lib/theme';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
+const emojiData = ['😀', '😂', '😍', '🥰', '😘', '😗', '😙', '😚', '☺️', '🙂', '🙃', '😉', '😊', '😋', '😎', '😏', '😣', '😥', '😮', '🤐', '😯', '😪', '😫', '😴', '😌', '😛', '😜', '😝', '🤤', '😒', '😓', '😔', '😕', '🙁', '☹️', '😖', '😞', '😟', '😤', '😢', '😭', '😦', '😧', '😨', '😩', '🤯', '😬', '😰', '😱', '🥵', '🥶', '😳', '🤪', '😵', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '💪', '✍️', '🙏', '💍', '💄', '💋', '👄', '👅', '👂', '👃', '👍', '👎', '👏', '👌', '✌️', '🤞', '🤟', '🤘', '🤙', '👊', '✊', '👋', '🤚', '🤝', '🙌', '👐', '👈', '👉', '👆', '👇'];
+
 dayjs.extend(relativeTime);
 
 interface Message {
@@ -48,6 +50,7 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
   const [sessionKey, setSessionKey] = useState<Uint8Array | null>(null);
   const [db, setDb] = useState<SQLite.SQLiteDatabase | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -229,6 +232,11 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
     return dayjs(timestamp).format('MMM D, h:mm A');
   }
 
+  function insertEmoji(emoji: string) {
+    setInputText(prev => prev + emoji);
+    setShowEmojiPicker(false);
+  }
+
   function renderMessage({ item, index }: { item: Message; index: number }) {
     const isMe = item.sender === wallet.address;
     const showAvatar = index === 0 || messages[index - 1].sender !== item.sender;
@@ -336,9 +344,36 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
               showsVerticalScrollIndicator={false}
             />
 
+            {/* Emoji Picker */}
+            {showEmojiPicker && (
+              <View style={[styles.emojiPicker, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
+                <FlatList
+                  data={emojiData}
+                  numColumns={8}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={styles.emojiItem}
+                      onPress={() => insertEmoji(item)}
+                    >
+                      <Text style={styles.emojiText}>{item}</Text>
+                    </TouchableOpacity>
+                  )}
+                  keyExtractor={(item, index) => index.toString()}
+                  style={styles.emojiList}
+                  contentContainerStyle={styles.emojiListContent}
+                />
+              </View>
+            )}
+
             {/* Input Area */}
             <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
               <View style={styles.inputWrapper}>
+                <TouchableOpacity
+                  style={styles.emojiButton}
+                  onPress={() => setShowEmojiPicker(!showEmojiPicker)}
+                >
+                  <Text style={styles.emojiButtonText}>😊</Text>
+                </TouchableOpacity>
                 <TextInput
                   style={[styles.input, { color: colors.text, backgroundColor: colors.background }]}
                   value={inputText}
@@ -355,7 +390,7 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
                     disabled={!inputText.trim()}
                   >
                     <Ionicons 
-                      name={inputText.trim() ? "send" : "happy"} 
+                      name="send" 
                       size={24} 
                       color={inputText.trim() ? colors.primary : colors.textSecondary} 
                     />
@@ -502,6 +537,25 @@ function createStyles(colors: any) {
       paddingBottom: Platform.OS === 'ios' ? 32 : 12,
       borderTopWidth: StyleSheet.hairlineWidth,
     },
+    emojiPicker: {
+      maxHeight: 200,
+      borderTopWidth: StyleSheet.hairlineWidth,
+    },
+    emojiList: {
+      maxHeight: 200,
+    },
+    emojiListContent: {
+      padding: 8,
+    },
+    emojiItem: {
+      width: '12.5%',
+      aspectRatio: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    emojiText: {
+      fontSize: 24,
+    },
     inputWrapper: {
       flexDirection: 'row',
       alignItems: 'flex-end',
@@ -509,6 +563,16 @@ function createStyles(colors: any) {
       paddingHorizontal: 12,
       paddingVertical: 8,
       minHeight: 44,
+    },
+    emojiButton: {
+      width: 36,
+      height: 36,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 8,
+    },
+    emojiButtonText: {
+      fontSize: 24,
     },
     input: {
       flex: 1,
