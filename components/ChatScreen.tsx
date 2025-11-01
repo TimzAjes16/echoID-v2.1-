@@ -131,11 +131,11 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
       // Fallback: Generate deterministic pubkey from counterparty address for mock mode
       if (!counterpartyPubKey || counterpartyPubKey.length === 0) {
         console.warn('[Chat] Using mock counterparty pubkey');
-        // Use a deterministic derivation from counterparty address
+        // Use a deterministic derivation from counterparty address and consent ID
         const addressBytes = new TextEncoder().encode(consent.counterparty);
         const combined = new Uint8Array([
           ...addressBytes,
-          ...new TextEncoder().encode(consent.consentId.toString()),
+          ...new TextEncoder().encode(consent.id),
         ]);
         const hash = new Uint8Array(32);
         for (let i = 0; i < Math.min(combined.length, 32); i++) {
