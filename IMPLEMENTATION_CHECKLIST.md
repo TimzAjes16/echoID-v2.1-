@@ -74,6 +74,9 @@ This document tracks what has been implemented and what still needs to be done t
 - [x] Transaction monitoring endpoints
 - [x] Test users in database
 - [x] Database seeding for test users
+- [x] Expo token testing endpoints
+  - `/api/test-expo-token/verify` - Verify token configuration
+  - `/api/test-expo-token/send-test` - Send test notification
 
 ## ⚠️ Required for Production
 
@@ -125,22 +128,34 @@ This document tracks what has been implemented and what still needs to be done t
 ### 5. Push Notifications Setup
 - [x] Get Expo Project ID from https://expo.dev ✅ (echoid-expogo)
 - [x] Expo PAT configured ✅
+- [x] Expo token testing functionality ✅
+  - Backend test endpoints (`/api/test-expo-token/verify`, `/api/test-expo-token/send-test`)
+  - Frontend test utility (`lib/testExpoToken.ts`)
+  - Settings UI test button
+  - Command line test script (`scripts/test-expo-token.js`)
+  - Complete documentation (`EXPO_TOKEN_TESTING.md`)
 - [ ] Configure APNs (iOS) in Expo dashboard
 - [ ] Configure FCM (Android) in Expo dashboard
 - [ ] Test push notifications between devices
 - [ ] Verify device registration works
 
-**Note:** Expo PAT is configured. You can now:
+**Note:** Expo PAT is configured and testing tools are available. You can now:
 - Use `expo publish` or EAS Build with authentication
 - Configure push notifications in Expo dashboard
 - Access Expo services programmatically
+- Test token functionality via Settings > Test Expo Token
+- Verify backend configuration via test endpoints
 
 ### 6. Testing ⚠️ **IMPORTANT**
 - [ ] Test handle claiming
 - [ ] Test handle resolution (including test users from database)
 - [ ] Test consent creation end-to-end
 - [ ] Test unlock request/approval
-- [ ] Test push notifications
+- [x] Test Expo token functionality ✅
+  - Test getting push token from device
+  - Test backend token configuration
+  - Test sending notifications
+- [ ] Test push notifications between devices
 - [ ] Test on both iOS and Android
 - [ ] Test with real transactions on testnet
 - [ ] Security audit of smart contracts
@@ -216,6 +231,15 @@ This document tracks what has been implemented and what still needs to be done t
 - The system falls back to local test users if backend is unavailable
 
 ### Recent Implementations (Latest Session)
+
+**Expo Token Testing:**
+- Backend token configuration support (EXPO_TOKEN or EXPO_ACCESS_TOKEN)
+- Backend test endpoints for token verification and test notifications
+- Frontend test utility library (`lib/testExpoToken.ts`) with complete test suite
+- Settings UI integration with "Test Expo Token" button
+- Command line test script for backend validation
+- Complete documentation (`EXPO_TOKEN_TESTING.md`)
+- End-to-end testing flow: push token retrieval → backend verification → test notification
 
 **Voice Recording & Coercion Detection:**
 - AI-based vocal analysis with pitch, volume, tempo, and hesitation detection
