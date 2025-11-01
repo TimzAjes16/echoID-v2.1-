@@ -80,26 +80,42 @@ export default function HomeScreen() {
 
       {(() => {
         // Filter consents to show only those involving the current user
-        // A consent should be visible if:
-        // 1. The current user's address matches the counterparty (user is party 1)
-        // 2. OR the consent was created/accepted by current user (user is party 2)
-        // For now, show all consents (in production, would filter by wallet address)
+        // A consent represents the current user's perspective:
+        // - The counterparty field shows who the OTHER party is
+        // - So if counterparty is set, this consent belongs to current user
+        // - For test users, we also check by handle match
         const currentAddress = wallet?.address?.toLowerCase();
         const currentHandle = profile?.handle?.toLowerCase();
         
         const filteredConsents = consents.filter((consent) => {
           if (!currentAddress && !currentHandle) return false;
           
-          // Show if user is the counterparty by address
-          const counterpartyMatch = consent.counterparty?.toLowerCase() === currentAddress;
-          
-          // For test users, also check by handle
+          // A consent is visible to current user if:
+          // 1. The counterparty is NOT the current user's address (meaning user is the other party)
+          // 2. OR we check by handle for test users
+          const counterpartyAddress = consent.counterparty?.toLowerCase();
           const counterpartyHandle = consent.counterpartyHandle?.toLowerCase();
-          const handleMatch = counterpartyHandle === currentHandle;
           
-          // Show consent if user is involved as counterparty or if we can't determine (show all in mock mode)
-          // In production, this would query blockchain for consents involving user's address
-          return counterpartyMatch || handleMatch || (!consent.counterpartyHandle && !currentHandle);
+          // If counterparty is current user, this consent doesn't belong to current user
+          // (it belongs to the counterparty)
+          const isCounterparty = counterpartyAddress === currentAddress || 
+                                 counterpartyHandle === currentHandle;
+          
+          // Show consent if current user is NOT the counterparty (meaning user owns this consent)
+          // OR if counterpartyHandle doesn't match (for backwards compatibility)
+          return !isCounterparty || (!counterpartyAddress && !counterpartyHandle);
+        });
+        
+        console.log('[HomeScreen] Consent filtering:', {
+          totalConsents: consents.length,
+          currentAddress,
+          currentHandle,
+          filteredCount: filteredConsents.length,
+          consents: consents.map(c => ({
+            id: c.id,
+            counterparty: c.counterparty,
+            counterpartyHandle: c.counterpartyHandle,
+          })),
         });
         
         return filteredConsents.length === 0 ? (
