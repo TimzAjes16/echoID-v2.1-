@@ -421,6 +421,17 @@ export async function approveUnlock(
     throw new Error('No wallet address');
   }
 
+  // Check if factory address is configured
+  const isMockMode = FACTORY_ADDRESS === '0x0000000000000000000000000000000000000000';
+  
+  if (isMockMode) {
+    console.warn('[MOCK] Factory contract address not configured. Using mock unlock approval.');
+    // Return mock transaction hash
+    const mockTxHash = `0x${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`;
+    console.log(`[MOCK] Mock unlock approval transaction: ${mockTxHash}`);
+    return mockTxHash;
+  }
+
   const data = encodeFunctionData({
     abi: CONSENT_FACTORY_ABI,
     functionName: 'approveUnlock',
