@@ -153,12 +153,33 @@ Every consent transaction produces an on-chain receipt:
 
 **Example Transaction:**
 ```typescript
+// Pre-transaction validation (now implemented)
+const balance = await publicClient.getBalance({ address: from });
+const feeWei = parseEther('0.001');
+const estimatedGas = BigInt(300000);
+const gasPrice = await publicClient.getGasPrice();
+const totalRequired = feeWei + (estimatedGas * gasPrice);
+
+if (balance < totalRequired) {
+  throw new Error(`Insufficient balance. Required: ${formatEther(totalRequired)} ETH`);
+}
+
+// Send transaction
 await walletClient.sendTransaction({
   to: FACTORY_ADDRESS,
   value: parseEther('0.001'), // 0.001 ETH protocol fee
   data: encodedFunctionCall,   // createConsent(...)
 });
 ```
+
+**Transaction Validation Flow:**
+1. User clicks "Accept & Pay"
+2. App checks wallet balance
+3. Calculates total cost (fee + estimated gas)
+4. Shows confirmation dialog with costs
+5. If balance insufficient, shows error (prevents failed transaction)
+6. If balance sufficient, proceeds with transaction
+7. Transaction includes factory address validation
 
 ## Multi-Chain Support
 
@@ -202,6 +223,37 @@ await walletClient.sendTransaction({
 3. Unlock approval → Transaction hash
 4. All events queryable via blockchain explorer
 
+## Transaction Validation & Error Handling
+
+### Pre-Transaction Checks ✅ **IMPLEMENTED**
+- **Balance Validation:** Checks wallet balance before sending transaction
+  - Fetches current balance from blockchain
+  - Calculates total required (protocol fee + estimated gas)
+  - Shows clear error if insufficient funds
+  - Prevents failed transactions due to low balance
+  
+- **Gas Estimation:** Estimates gas costs before transaction
+  - Uses current gas prices from network
+  - Conservative estimate (300k gas units)
+  - Displays estimated cost to user
+  - Validates balance covers fee + gas
+  
+- **Factory Address Validation:** Ensures contract address is configured
+  - Validates `EXPO_PUBLIC_FACTORY_ADDRESS` is set
+  - Prevents sending to null address (0x000...)
+  - Clear error message if not configured
+
+### Error Handling ✅ **IMPLEMENTED**
+- **Insufficient Balance Errors:**
+  - Catches balance-related errors
+  - Provides detailed breakdown (fee + gas vs available)
+  - Helps users understand transaction costs
+  
+- **Transaction Error Improvement:**
+  - Better error messages for common failures
+  - Specific guidance for insufficient funds
+  - Graceful error recovery
+
 ## Current Status
 
 ✅ **Implemented:**
@@ -210,6 +262,11 @@ await walletClient.sendTransaction({
 - Multi-chain transaction support (Base, Nova, zkEVM)
 - Local wallet transaction signing
 - WalletConnect transaction signing
+- **Pre-transaction balance validation**
+- **Gas cost estimation**
+- **Factory address validation**
+- **Enhanced error handling**
+- **Payment confirmation dialogs**
 
 ⚠️ **Production Requirements:**
 - Deploy ConsentFactory contract to Base mainnet
@@ -217,6 +274,7 @@ await walletClient.sendTransaction({
 - Ensure contract ABI matches implementation
 - Verify event signatures match contract
 - Test with real transactions on testnet first
+- Configure treasury address for fee collection
 
 ## Example Transaction on Base
 

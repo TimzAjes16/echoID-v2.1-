@@ -228,11 +228,14 @@ EXPO_PUBLIC_INFURA_PROJECT_ID=your_infura_id (optional)
 - [ ] Device token registration endpoint
 - [ ] Notification delivery confirmation
 
-### Phase 3: Payment Processing (High Priority)
-- [ ] Integrate Apple Pay (requires native build)
-- [ ] Payment processor API (Stripe, Square, etc.)
-- [ ] Or use crypto payments via WalletConnect (simpler)
-- [ ] Payment confirmation webhooks
+### Phase 3: Payment Processing ✅ **COMPLETED**
+- [x] Crypto payments via WalletConnect/local wallet (fully implemented)
+- [x] Pre-transaction balance validation
+- [x] Payment confirmation dialogs
+- [x] Gas cost estimation and display
+- [x] Error handling for insufficient funds
+- [ ] Optional: Integrate Apple Pay (requires native build) - NOT REQUIRED
+- [ ] Optional: Payment processor API (Stripe, Square, etc.) - NOT REQUIRED
 
 ### Phase 4: Blockchain Integration (Critical)
 - [ ] Deploy ConsentFactory contract to Base mainnet
@@ -305,9 +308,13 @@ The current implementation works in **mock/offline mode** for testing:
 - ✅ Consent requests stored locally
 - ✅ Local notifications (not push to other devices)
 - ✅ **Blockchain transactions are real** (when connected to mainnet/testnet)
+- ✅ **Wallet balance checking** (prevents insufficient funds errors)
+- ✅ **Payment confirmation dialogs** (shows costs before transaction)
+- ✅ **AI-based coercion detection** (vocal intonation analysis)
+- ✅ **Template-specific voice phrases** (required consent phrases)
 - ❌ No real push notifications to other phones (local only)
-- ❌ No payment processing (fees collected on-chain via crypto)
-- ❌ No backend API (handles mocked)
+- ✅ **Payment processing** (fees collected on-chain via crypto - fully implemented)
+- ❌ No backend API (handles mocked, but backend structure exists)
 - ⚠️ Event decoding may need contract ABI for production
 
 ## 11. Next Steps for Production
@@ -335,14 +342,21 @@ The current implementation works in **mock/offline mode** for testing:
 3. **Device token registration**
 4. **Test notifications** to other devices
 
-### Phase 4: Payment (Medium Priority)
-- **Option A (Recommended):** Use crypto payments (already implemented)
+### Phase 4: Payment ✅ **IMPLEMENTED**
+- ✅ **Crypto payments fully implemented:**
   - Protocol fee collected on-chain via `createConsent` payable function
+  - Pre-transaction balance validation
+  - Payment confirmation dialogs with cost breakdown
+  - Gas estimation and display
+  - Error handling for insufficient funds
+  - Factory address validation
   - No additional payment processor needed
-- **Option B:** Add Apple Pay (requires native dev client)
+  
+- **Optional Enhancement:** Add Apple Pay (requires native dev client)
   - Integrate Apple Pay SDK
   - Payment processor API
   - Convert fiat → crypto for on-chain payment
+  - **Note:** Crypto payment flow is production-ready and recommended
 
 ### Phase 5: Monitoring & Analytics
 1. **Transaction monitoring** service
@@ -371,10 +385,16 @@ The current implementation works in **mock/offline mode** for testing:
 - ✅ **Event decoding:** Implemented (may need contract ABI verification)
 - ✅ **Protocol fee collection:** On-chain via payable function
 - ✅ **Multi-chain support:** Base, Nova, zkEVM ready
+- ✅ **Transaction validation:** Balance checks, gas estimation, address validation
+- ✅ **Payment confirmation:** User-facing dialogs with cost breakdown
+- ✅ **Error handling:** Enhanced messages for insufficient funds and transaction failures
+- ✅ **Wallet balance display:** Real-time balance fetching and display
+- ✅ **AI coercion detection:** Vocal intonation analysis with risk scoring
+- ✅ **Template-specific phrases:** Required consent phrases per contract type
 - ⚠️ **Contract deployment:** Needs to be done for production
-- ⚠️ **Backend API:** Mock mode (needs implementation)
-- ⚠️ **Push notifications:** Local only (needs backend)
-- ⚠️ **Apple Pay:** Not implemented (use crypto payments instead)
+- ⚠️ **Backend API:** Mock mode (backend structure exists, needs deployment)
+- ⚠️ **Push notifications:** Local only (needs backend deployment)
+- ✅ **Payment processing:** Crypto payments fully functional (no Apple Pay needed)
 
 ### Recommended Approach
 1. **Use crypto payments** (already implemented) - simpler, no additional APIs needed
@@ -385,4 +405,45 @@ The current implementation works in **mock/offline mode** for testing:
 ---
 
 **Note:** The current codebase is designed to work with or without backend APIs. Mock mode allows full testing of the UI/UX flow. Blockchain transactions are **real and on-chain** once you deploy the contract and set the factory address.
+
+## 13. Recently Implemented Features
+
+### Voice Recording & Coercion Detection ✅
+- **AI-based vocal analysis:**
+  - Pitch analysis (stress indicators)
+  - Volume consistency (hesitation detection)
+  - Tempo stability (rhythm patterns)
+  - Hesitation markers (um, uh, pauses)
+  - Confidence score calculation
+  - Emotional tone detection
+  
+- **Template-specific required phrases:**
+  - Sex NDA: "I consent willingly and voluntarily..."
+  - Standard NDA: "I agree... willingly and without coercion"
+  - Creative Collaboration: "I agree... voluntarily and freely"
+  - Business Collaboration: "I consent... of my own free will"
+  - Conversation Confidentiality: "I agree... willingly and without pressure"
+
+### Wallet & Payment Features ✅
+- **Balance display:**
+  - Real-time balance fetching from blockchain
+  - Display in Profile screen
+  - Manual refresh capability
+  - Auto-refresh on wallet/chain changes
+  
+- **Payment validation:**
+  - Pre-transaction balance checks
+  - Gas cost estimation
+  - Total cost calculation (fee + gas)
+  - Payment confirmation dialogs
+  - Insufficient funds prevention
+  - Enhanced error messages
+
+### UI/UX Improvements ✅
+- Dark mode support across all screens
+- Theme-aware SafeAreaView
+- Improved handle and date display
+- Fixed React Native key warnings
+- Enhanced consent request cards
+- Minimal, clean design
 

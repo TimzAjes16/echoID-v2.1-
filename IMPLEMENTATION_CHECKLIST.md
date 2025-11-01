@@ -11,7 +11,7 @@ This document tracks what has been implemented and what still needs to be done t
 - [x] QR code generation and scanning
 - [x] Consent creation wizard
 - [x] Voice recording for verification
-- [x] Camera capture for selfie verification (fixed)
+- [x] Camera capture for selfie verification (fixed with review/confirmation step)
 - [x] Geolocation hashing
 - [x] On-chain consent creation
 - [x] Unlock request/approval flow
@@ -20,6 +20,43 @@ This document tracks what has been implemented and what still needs to be done t
 - [x] Test users support
 - [x] UK law compliant legal pages
 - [x] Logout functionality (fixed)
+
+### Advanced Features
+- [x] AI-based coercion detection with vocal intonation analysis
+  - Pitch analysis (average and variation)
+  - Volume consistency analysis
+  - Tempo stability measurement
+  - Hesitation marker detection
+  - Confidence score calculation
+  - Emotional tone detection (calm/stressed/uncertain/confident)
+- [x] Template-specific required phrases for voice recording
+  - Each contract type has a unique consent phrase
+  - Phrases emphasize voluntary consent
+  - Displayed prominently during recording
+- [x] Wallet balance display and checking
+  - Real-time balance fetching from blockchain
+  - Display in Profile screen with refresh capability
+  - Auto-refresh on wallet/chain changes
+- [x] Payment confirmation and balance validation
+  - Pre-transaction balance checks
+  - Payment confirmation dialog with cost breakdown
+  - Estimated gas cost display
+  - Prevents insufficient funds errors
+- [x] Enhanced error handling
+  - Improved transaction error messages
+  - Balance validation before transactions
+  - Factory address validation
+  - Graceful error recovery
+- [x] Dark mode/Theme support
+  - Light, dark, and auto theme modes
+  - Applied across all screens (settings, drawer, help, terms, privacy)
+  - Dynamic status bar styling
+  - SafeAreaView theme-aware
+- [x] UI/UX improvements
+  - Minimal, clean design
+  - Fixed duplicate key warnings
+  - Improved handle and date display
+  - Enhanced consent request card design
 
 ### Backend API Client
 - [x] Complete API client library (`lib/api.ts`)
@@ -169,4 +206,31 @@ This document tracks what has been implemented and what still needs to be done t
 - Test users are automatically seeded on first database initialization
 - Both test users and regular handles use the same API endpoints
 - The system falls back to local test users if backend is unavailable
+
+### Recent Implementations (Latest Session)
+
+**Voice Recording & Coercion Detection:**
+- AI-based vocal analysis with pitch, volume, tempo, and hesitation detection
+- Template-specific required phrases (e.g., "I consent willingly and voluntarily...")
+- Real-time recording duration and visual feedback
+- Post-recording coercion analysis with user alerts
+
+**Wallet & Payment:**
+- Wallet balance display with automatic fetching
+- Pre-transaction balance validation
+- Payment confirmation dialogs with cost breakdown
+- Enhanced error messages for insufficient funds
+- Factory address validation before transactions
+
+**Consent Requests:**
+- Fixed data integrity (full request stored before notification)
+- Proper handle and date display
+- Enhanced UI with better error handling
+- Payment confirmation before acceptance
+
+**UI/UX:**
+- Dark mode support across all screens
+- Minimal, clean design improvements
+- Fixed React Native key warnings
+- Improved theme-aware SafeAreaView handling
 
