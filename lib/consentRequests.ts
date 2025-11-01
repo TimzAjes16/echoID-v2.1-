@@ -13,27 +13,48 @@ export async function createConsentRequest(
 ): Promise<void> {
   const currentUser = useStore.getState();
   
-  // Ensure we have valid handle and address
-  const fromHandle = currentUser.profile?.handle?.trim() || 'unknown';
-  const fromAddress = currentUser.wallet?.address || '';
+  // Ensure we have valid handle and address - IMPORTANT: Get fresh state to avoid stale data
+  const currentProfile = currentUser.profile;
+  const currentWallet = currentUser.wallet;
+  
+  const fromHandle = (currentProfile?.handle?.trim() || '').toLowerCase();
+  const fromAddress = currentWallet?.address || '';
+  
+  // Debug logging to verify correct user
+  console.log('[createConsentRequest] Current user state:', {
+    profileHandle: currentProfile?.handle,
+    walletAddress: fromAddress,
+    fromHandle,
+    counterpartyHandle: counterpartyHandle.toLowerCase(),
+  });
   
   if (!fromAddress) {
     throw new Error('Wallet address not available');
   }
   
+  if (!fromHandle || fromHandle === 'unknown') {
+    console.error('[createConsentRequest] ERROR: Invalid fromHandle:', fromHandle);
+    throw new Error(`Invalid user handle: ${fromHandle}. Please ensure you are logged in with a valid handle.`);
+  }
+  
+  // Ensure counterparty is different from sender
+  if (fromHandle === counterpartyHandle.toLowerCase()) {
+    throw new Error('Cannot create consent request to yourself');
+  }
+  
   // Generate unique ID: timestamp + random string + first 4 chars of fromHandle for extra uniqueness
   const timestamp = Date.now();
   const randomStr = Math.random().toString(36).substring(2, 11);
-  const handlePrefix = fromHandle !== 'unknown' ? fromHandle.substring(0, 4).toLowerCase() : 'unk';
+  const handlePrefix = fromHandle.substring(0, 4);
   const request: ConsentRequest = {
     id: `req_${timestamp}_${handlePrefix}_${randomStr}`,
-    fromHandle,
+    fromHandle, // This should be the sender (e.g., "sarah")
     fromAddress,
     template,
     requestedAt: timestamp, // Ensure timestamp is set
     consentData: {
       ...consentData,
-      counterpartyHandle,
+      counterpartyHandle, // This is the recipient (e.g., "katie")
       counterpartyAddress,
     },
   };
@@ -42,6 +63,7 @@ export async function createConsentRequest(
     id: request.id,
     fromHandle: request.fromHandle,
     fromAddress: request.fromAddress,
+    toHandle: counterpartyHandle,
     template: request.template,
     requestedAt: request.requestedAt,
   });
@@ -93,32 +115,46 @@ export async function createConsentRequest(
     // Mock mode - backend not configured
     // Check if counterparty is a test user or the currently logged in user
     const { isTestUser } = await import('./testUsers');
-    const currentProfile = useStore.getState().profile;
-    const currentHandle = currentProfile.handle?.toLowerCase();
+    const storeState = useStore.getState();
+    const currentLoggedInHandle = storeState.profile?.handle?.trim().toLowerCase();
     const targetHandle = counterpartyHandle.toLowerCase();
     
-    // IMPORTANT: Store the full request FIRST before sending notification
-    // This ensures when notification listener receives the notification,
-    // it can find the full request data in the store
-    if (currentHandle === targetHandle) {
-      // User is logged in with target handle - add request to their store
-      useStore.getState().addConsentRequest(request);
-      console.log(`[MOCK] Full consent request stored for @${targetHandle}`);
+    console.log(`[MOCK] Request routing check:`, {
+      fromHandle: request.fromHandle,
+      toHandle: targetHandle,
+      currentLoggedInHandle,
+      isTestUser: isTestUser(counterpartyHandle),
+    });
+    
+    // CRITICAL: Only add request to store if the counterparty (recipient) is currently logged in
+    // The request should only appear in the recipient's requests list, not the sender's
+    if (currentLoggedInHandle === targetHandle) {
+      // Counterparty is logged in - add request to THEIR store only
+      storeState.addConsentRequest(request);
+      console.log(`[MOCK] Request stored for logged-in recipient @${targetHandle} (from @${request.fromHandle})`);
       
-      // Then send notification
+      // Send notification to recipient
       await sendConsentRequestNotification(request);
-      console.log(`[MOCK] Consent request notification sent to @${targetHandle}`);
+      console.log(`[MOCK] Notification sent to @${targetHandle}`);
     } else if (isTestUser(counterpartyHandle)) {
-      // For test users in mock mode, store request but only notify if they're logged in
-      // Store it anyway so if they log in later, we can sync
-      useStore.getState().addConsentRequest(request);
-      await sendConsentRequestNotification(request);
-      console.log(`[MOCK] Consent request stored for test user @${targetHandle} (may need to log in to see it)`);
+      // For test users, store the request so it appears when they log in
+      // Always store it for test users (they're always available in mock mode)
+      storeState.addConsentRequest(request);
+      if (currentLoggedInHandle === targetHandle) {
+        await sendConsentRequestNotification(request);
+        console.log(`[MOCK] Test user @${targetHandle} is logged in - request stored and notified`);
+      } else {
+        console.log(`[MOCK] Test user @${targetHandle} not logged in - request stored for when they log in`);
+      }
     } else {
-      // Store request locally even if user not logged in (for future sync)
-      useStore.getState().addConsentRequest(request);
-      await sendConsentRequestNotification(request);
-      console.log(`[MOCK] Backend not configured, request stored locally for @${targetHandle}`);
+      // Non-test user, backend not configured
+      if (currentLoggedInHandle === targetHandle) {
+        storeState.addConsentRequest(request);
+        await sendConsentRequestNotification(request);
+        console.log(`[MOCK] User @${targetHandle} is logged in - request stored`);
+      } else {
+        console.log(`[MOCK] User @${targetHandle} not logged in - backend required for notification`);
+      }
     }
   }
 }

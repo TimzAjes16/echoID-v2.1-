@@ -7,11 +7,32 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function ConsentRequestsScreen() {
   const router = useRouter();
-  const { consentRequests, removeConsentRequest, addConsent, wallet } = useStore();
+  const { consentRequests, removeConsentRequest, addConsent, wallet, profile } = useStore();
   const [processing, setProcessing] = useState<string | null>(null);
 
-  // Deduplicate consent requests by ID to prevent duplicate key errors
-  const uniqueConsentRequests = consentRequests.reduce((acc, current) => {
+  // Filter requests to only show those meant for the current user (recipient)
+  // Check if current user's handle matches the counterpartyHandle in the request
+  // OR if it's an older format request without counterpartyHandle, check against fromHandle
+  const currentHandle = profile?.handle?.trim().toLowerCase();
+  
+  const filteredRequests = consentRequests.filter((req) => {
+    // If request has counterpartyHandle in consentData, check if it matches current user
+    const recipientHandle = req.consentData?.counterpartyHandle?.toLowerCase();
+    
+    // Request is for current user if:
+    // 1. The recipientHandle (in consentData) matches current handle (new format)
+    // 2. OR if no counterpartyHandle, it's a legacy request (keep it for now)
+    if (recipientHandle) {
+      return recipientHandle === currentHandle;
+    }
+    // Legacy format: if fromHandle doesn't match current user, assume it's for them
+    // (In old format, if you didn't send it, you received it)
+    const fromHandle = req.fromHandle?.toLowerCase();
+    return fromHandle !== currentHandle;
+  });
+
+  // Deduplicate filtered consent requests by ID to prevent duplicate key errors
+  const uniqueConsentRequests = filteredRequests.reduce((acc, current) => {
     const existingIndex = acc.findIndex(item => item.id === current.id);
     if (existingIndex === -1) {
       acc.push(current);
@@ -21,6 +42,21 @@ export default function ConsentRequestsScreen() {
     }
     return acc;
   }, [] as ConsentRequest[]);
+  
+  // Debug logging
+  if (consentRequests.length > 0) {
+    console.log('[RequestsScreen] Request filtering:', {
+      totalRequests: consentRequests.length,
+      currentHandle,
+      filteredCount: filteredRequests.length,
+      uniqueCount: uniqueConsentRequests.length,
+      requests: consentRequests.map(r => ({
+        id: r.id,
+        fromHandle: r.fromHandle,
+        recipientHandle: r.consentData?.counterpartyHandle,
+      })),
+    });
+  }
 
   async function handleAccept(requestId: string) {
     setProcessing(requestId);
