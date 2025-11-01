@@ -163,14 +163,34 @@ export const useStore = create<AppState>((set, get) => ({
 
   disconnectWallet: async () => {
     const { wallet } = get();
+    
+    // Disconnect WalletConnect session if exists
     if (wallet.session) {
       try {
-        await disconnectWallet(wallet.session);
+        const { disconnectWallet: disconnectWC } = await import('../lib/walletconnect');
+        await disconnectWC(wallet.session);
       } catch (error) {
-        console.error('Error disconnecting:', error);
+        console.error('Error disconnecting WalletConnect:', error);
       }
     }
     
+    // Clear local wallet if it's a local wallet
+    if (wallet.isLocal) {
+      try {
+        await SecureStore.deleteItemAsync('local_wallet_private_key');
+      } catch (error) {
+        console.error('Error clearing local wallet:', error);
+      }
+    }
+    
+    // Clear profile from SecureStore
+    try {
+      await SecureStore.deleteItemAsync(PROFILE_STORAGE_KEY);
+    } catch (error) {
+      console.error('Error clearing profile:', error);
+    }
+    
+    // Reset state
     set({
       wallet: {
         session: null,
@@ -178,6 +198,12 @@ export const useStore = create<AppState>((set, get) => ({
         chainId: null,
         isLocal: false,
       },
+      profile: {
+        handle: null,
+        devicePubKey: null,
+      },
+      consents: [],
+      consentRequests: [],
     });
   },
 
@@ -265,4 +291,5 @@ export const useStore = create<AppState>((set, get) => ({
     }
   },
 }));
+
 
