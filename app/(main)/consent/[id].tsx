@@ -1,15 +1,21 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useStore } from '../../../state/useStore';
 import UnlockBar from '../../../components/UnlockBar';
-import Chat from '../../../components/Chat';
+import ChatScreen from '../../../components/ChatScreen';
+import { Ionicons } from '@expo/vector-icons';
+import { getThemeColors } from '../../../lib/theme';
+import { useColorScheme } from 'react-native';
 import dayjs from 'dayjs';
 
 export default function ConsentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getConsent } = useStore();
+  const { getConsent, themeMode } = useStore();
+  const systemColorScheme = useColorScheme();
+  const colors = getThemeColors(themeMode, systemColorScheme);
   const [consent, setConsent] = useState(getConsent(id));
+  const [chatVisible, setChatVisible] = useState(false);
 
   useEffect(() => {
     setConsent(getConsent(id));
@@ -27,8 +33,16 @@ export default function ConsentDetailScreen() {
   const timeRemaining = consent.lockedUntil - Date.now();
   const hoursRemaining = Math.floor(timeRemaining / (1000 * 60 * 60));
 
+  const counterpartyName = consent.counterpartyHandle 
+    ? `@${consent.counterpartyHandle}`
+    : `${consent.counterparty.slice(0, 6)}...${consent.counterparty.slice(-4)}`;
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <>
+      <ScrollView 
+        style={[styles.container, { backgroundColor: colors.background }]} 
+        contentContainerStyle={styles.content}
+      >
       <View style={styles.header}>
         <Text style={styles.title}>{consent.template}</Text>
         <View style={[styles.statusBadge, isLocked ? styles.locked : styles.unlocked]}>
@@ -76,15 +90,36 @@ export default function ConsentDetailScreen() {
 
       <UnlockBar consent={consent} />
 
-      {!isLocked && <Chat consent={consent} />}
+      {/* Chat Section */}
+      <View style={[styles.section, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Communication</Text>
+        <TouchableOpacity
+          style={[styles.chatButton, { backgroundColor: colors.primary }]}
+          onPress={() => setChatVisible(true)}
+        >
+          <View style={styles.chatButtonContent}>
+            <Ionicons name="chatbubbles" size={20} color="#fff" />
+            <Text style={styles.chatButtonText}>Open Chat</Text>
+          </View>
+          <Text style={styles.chatButtonSubtext}>
+            End-to-end encrypted messaging with {counterpartyName}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
+
+    <ChatScreen
+      consent={consent}
+      visible={chatVisible}
+      onClose={() => setChatVisible(false)}
+    />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
   },
   content: {
     padding: 16,
@@ -161,6 +196,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'monospace',
     color: '#333',
+  },
+  chatButton: {
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+  },
+  chatButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  chatButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  chatButtonSubtext: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 12,
+    marginTop: 4,
   },
 });
 
