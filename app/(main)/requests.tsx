@@ -10,7 +10,7 @@ export default function ConsentRequestsScreen() {
   const router = useRouter();
   const { consentRequests, removeConsentRequest, addConsent, wallet, profile, consents } = useStore();
   const [processing, setProcessing] = useState<string | null>(null);
-  const [unreadCounts, setUnreadCounts] = useState<Map<bigint, number>>(new Map());
+  const [unreadCounts, setUnreadCounts] = useState<Map<string, number>>(new Map());
 
   // Load unread counts for consents
   useEffect(() => {
@@ -282,7 +282,8 @@ export default function ConsentRequestsScreen() {
       c.counterpartyHandle?.toLowerCase() === item.fromHandle?.toLowerCase() ||
       c.counterparty === item.fromAddress
     );
-    const unreadCount = consent ? unreadCounts.get(consent.consentId) || 0 : 0;
+    // Use consent.id (string) since chat DB stores consent.id
+    const unreadCount = consent ? unreadCounts.get(consent.id) || 0 : 0;
 
     return (
       <View style={styles.requestCard}>

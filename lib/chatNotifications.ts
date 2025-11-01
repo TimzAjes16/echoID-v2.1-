@@ -25,15 +25,19 @@ async function getChatDb(): Promise<SQLite.SQLiteDatabase | null> {
 /**
  * Get unread message count for a consent
  * Counts messages NOT from the current user
+ * Note: consent_id in DB is actually consent.id (string), not consent.consentId (bigint)
  */
-export async function getUnreadCount(consentId: bigint, currentUserAddress: string): Promise<number> {
+export async function getUnreadCount(consentId: bigint | string, currentUserAddress: string): Promise<number> {
   const db = await getChatDb();
   if (!db) return 0;
 
   try {
+    // Convert to string for query (can be bigint or string)
+    const consentIdStr = typeof consentId === 'bigint' ? consentId.toString() : consentId;
+    
     const result = await db.getFirstAsync<{ count: number }>(
       'SELECT COUNT(*) as count FROM messages WHERE consent_id = ? AND sender != ?',
-      [consentId.toString(), currentUserAddress]
+      [consentIdStr, currentUserAddress]
     );
     return result?.count || 0;
   } catch (error) {
@@ -44,11 +48,11 @@ export async function getUnreadCount(consentId: bigint, currentUserAddress: stri
 
 /**
  * Get unread message count for all consents
- * Returns a map of consentId -> unread count
+ * Returns a map of consent.id (string) -> unread count
  */
-export async function getAllUnreadCounts(currentUserAddress: string): Promise<Map<bigint, number>> {
+export async function getAllUnreadCounts(currentUserAddress: string): Promise<Map<string, number>> {
   const db = await getChatDb();
-  const counts = new Map<bigint, number>();
+  const counts = new Map<string, number>();
 
   if (!db) return counts;
 
@@ -59,12 +63,8 @@ export async function getAllUnreadCounts(currentUserAddress: string): Promise<Ma
     );
 
     for (const row of results) {
-      try {
-        const consentId = BigInt(row.consent_id);
-        counts.set(consentId, row.count);
-      } catch (error) {
-        console.error('[ChatNotifications] Failed to parse consent ID:', row.consent_id);
-      }
+      // consent_id in DB is consent.id (string), not consent.consentId (bigint)
+      counts.set(row.consent_id, row.count);
     }
   } catch (error) {
     console.error('[ChatNotifications] Failed to get all unread counts:', error);

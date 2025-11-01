@@ -24,13 +24,14 @@ export default function BadgeCard({ consent }: BadgeCardProps) {
   useEffect(() => {
     async function loadUnreadCount() {
       if (!wallet.address) return;
-      const count = await getUnreadCount(consent.consentId, wallet.address);
+      // Use consent.id (string) not consent.consentId (bigint) since chat DB stores consent.id
+      const count = await getUnreadCount(consent.id, wallet.address);
       setUnreadCount(count);
     }
     loadUnreadCount();
     const interval = setInterval(loadUnreadCount, 5000);
     return () => clearInterval(interval);
-  }, [wallet.address, consent.consentId]);
+  }, [wallet.address, consent.id]);
 
   const counterpartyName = consent.counterpartyHandle 
     ? `@${consent.counterpartyHandle}`
