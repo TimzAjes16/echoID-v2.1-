@@ -83,10 +83,23 @@ This document outlines all APIs and services required to make EchoID production-
 - When unlock is requested/approved → Notify counterparty
 - When consent is unlocked → Notify both parties
 
-**API Endpoint:**
+**API Endpoints:**
 - `POST /notifications/send` - Send notification via Expo Push API
   - Body: `{ pushToken, title, body, data }`
   - Returns: `{ sent: true, receiptId }`
+
+**Expo Token Testing Endpoints (Implemented):**
+- `GET /api/test-expo-token/verify` - Verify Expo token configuration
+  - Returns: `{ success: boolean, details: { tokenConfigured, tokenLength, sdkInitialized, tokenValidationWorking } }`
+  - Verifies that `EXPO_TOKEN` or `EXPO_ACCESS_TOKEN` is configured
+  - Validates Expo SDK initialization
+  
+- `POST /api/test-expo-token/send-test` - Send test notification
+  - Body: `{ pushToken: "ExponentPushToken[...]" }`
+  - Returns: `{ success: boolean, ticket: {...}, receiptId: string }`
+  - Validates push token format
+  - Sends test notification to device
+  - Returns ticket with receipt ID
 
 ## 3. Payment Processing
 
@@ -226,19 +239,34 @@ EXPO_PUBLIC_INFURA_PROJECT_ID=your_infura_id (optional)
 ### Phase 2: Push Notifications (Critical - In Progress)
 - [x] Expo Project ID configured ✅ (`echoid-expogo`)
 - [x] Expo PAT configured ✅
+- [x] Expo token testing functionality ✅
+  - Backend test endpoints (`/api/test-expo-token/verify`, `/api/test-expo-token/send-test`)
+  - Frontend test utility (`lib/testExpoToken.ts`)
+  - Settings UI test button (Settings > Test Expo Token)
+  - Command line test script (`scripts/test-expo-token.js`)
+  - Complete documentation (`EXPO_TOKEN_TESTING.md`)
 - [ ] Configure APNs (iOS) in Expo dashboard
 - [ ] Configure FCM (Android) in Expo dashboard
-- [ ] Backend service to send push notifications
+- [x] Backend service to send push notifications ✅ (implemented)
 - [ ] Device token registration endpoint
 - [ ] Notification delivery confirmation
 - [ ] Test push notifications between devices
 
 **Next Steps:**
-1. Log in to Expo dashboard (https://expo.dev)
-2. Navigate to project `echoid-expogo`
-3. Configure APNs for iOS (requires Apple Developer account)
-4. Configure FCM for Android
-5. Use Expo PAT to authenticate API calls for push notifications
+1. ✅ Verify Expo token works via Settings > Test Expo Token in app
+2. ✅ Test backend token configuration via `/api/test-expo-token/verify`
+3. Log in to Expo dashboard (https://expo.dev)
+4. Navigate to project `echoid-expogo`
+5. Configure APNs for iOS (requires Apple Developer account)
+6. Configure FCM for Android
+7. Use Expo PAT to authenticate API calls for push notifications
+8. Test push notifications between devices
+
+**Testing Tools Available:**
+- App Settings UI: Navigate to Settings > Notifications > Test Expo Token
+- Backend API: `GET /api/test-expo-token/verify` and `POST /api/test-expo-token/send-test`
+- CLI Script: `node scripts/test-expo-token.js [pushToken]`
+- Documentation: See `EXPO_TOKEN_TESTING.md` for complete guide
 
 ### Phase 3: Payment Processing ✅ **COMPLETED**
 - [x] Crypto payments via WalletConnect/local wallet (fully implemented)
@@ -348,11 +376,13 @@ The current implementation works in **mock/offline mode** for testing:
 3. **Implement consent request** endpoints
 4. **Database setup** (PostgreSQL/MongoDB)
 
-### Phase 3: Push Notifications (High Priority)
-1. **Expo Push Notification setup**
-2. **Backend notification service**
-3. **Device token registration**
-4. **Test notifications** to other devices
+### Phase 3: Push Notifications (High Priority - Partially Complete)
+1. ✅ **Expo Push Notification setup** ✅ (token configured, testing tools ready)
+2. ✅ **Backend notification service** ✅ (implemented with Expo SDK)
+3. ✅ **Expo token testing functionality** ✅ (test endpoints, frontend utilities, CLI script)
+4. [ ] **Device token registration** (endpoint exists, needs integration)
+5. [ ] **Configure APNs/FCM credentials** (requires Expo dashboard setup)
+6. [ ] **Test notifications** to other devices (testing tools ready, needs credentials)
 
 ### Phase 4: Payment ✅ **IMPLEMENTED**
 - ✅ **Crypto payments fully implemented:**
@@ -403,9 +433,10 @@ The current implementation works in **mock/offline mode** for testing:
 - ✅ **Wallet balance display:** Real-time balance fetching and display
 - ✅ **AI coercion detection:** Vocal intonation analysis with risk scoring
 - ✅ **Template-specific phrases:** Required consent phrases per contract type
+- ✅ **Expo token testing:** Complete testing suite (backend endpoints, frontend utilities, CLI script, UI integration)
 - ⚠️ **Contract deployment:** Needs to be done for production
 - ⚠️ **Backend API:** Mock mode (backend structure exists, needs deployment)
-- ⚠️ **Push notifications:** Local only (needs backend deployment)
+- ⚠️ **Push notifications:** Local only (testing tools ready, needs APNs/FCM credentials and backend deployment)
 - ✅ **Payment processing:** Crypto payments fully functional (no Apple Pay needed)
 
 ### Recommended Approach
@@ -450,6 +481,34 @@ The current implementation works in **mock/offline mode** for testing:
   - Payment confirmation dialogs
   - Insufficient funds prevention
   - Enhanced error messages
+
+### Expo Token Testing ✅
+- **Backend test endpoints:**
+  - `GET /api/test-expo-token/verify` - Verify token configuration
+  - `POST /api/test-expo-token/send-test` - Send test notification
+  - Validates token format and SDK initialization
+  
+- **Frontend test utilities:**
+  - `testGetPushToken()` - Get device push token
+  - `testBackendTokenConfig()` - Verify backend token setup
+  - `testSendNotification()` - Send test notification
+  - `runCompleteExpoTokenTest()` - End-to-end test suite
+  
+- **Settings UI integration:**
+  - "Test Expo Token" button in Settings > Notifications
+  - Runs complete test suite when tapped
+  - Displays results with visual indicators (✅/❌)
+  - Shows loading state during testing
+  
+- **Command line testing:**
+  - `scripts/test-expo-token.js` - CLI script for backend validation
+  - Can verify token configuration
+  - Can send test notifications via CLI
+  
+- **Documentation:**
+  - `EXPO_TOKEN_TESTING.md` - Complete testing guide
+  - Troubleshooting section
+  - Integration points documented
 
 ### UI/UX Improvements ✅
 - Dark mode support across all screens
