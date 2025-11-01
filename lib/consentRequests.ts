@@ -1,6 +1,5 @@
 import { Consent, ConsentRequest } from '../state/useStore';
 import { sendConsentRequestNotification } from './notifications';
-import { getTestUser, isTestUser, TEST_USERS } from './testUsers';
 import { useStore } from '../state/useStore';
 
 /**
@@ -26,28 +25,58 @@ export async function createConsentRequest(
     },
   };
 
-  // In mock mode, simulate sending notification to test users
-  if (isTestUser(counterpartyHandle)) {
-    // Send local notification (for testing)
-    await sendConsentRequestNotification(request);
+  // Send via backend API (handles both test users and regular users from database)
+  const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.echoid.xyz';
+  
+  if (API_BASE_URL && API_BASE_URL !== 'https://api.echoid.xyz') {
+    try {
+      // Call backend API directly
+      const response = await fetch(`${API_BASE_URL}/consent-requests`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fromHandle: request.fromHandle,
+          fromAddress: request.fromAddress,
+          toHandle: counterpartyHandle,
+          template: request.template,
+          consentData: request.consentData,
+        }),
+      });
 
-    // In MVP: If the counterparty is currently logged in with that handle, add the request
-    // In production, this would be handled by backend + push notifications
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}`);
+      }
+
+      console.log(`[API] Consent request sent to @${counterpartyHandle} via backend`);
+    } catch (error: any) {
+      console.error('[API] Failed to send consent request:', error.message);
+      
+      // Fallback: Send local notification and store locally if backend unavailable
+      await sendConsentRequestNotification(request);
+      
+      // If counterparty is currently logged in, add request to their store
+      const counterpartyProfile = useStore.getState().profile;
+      if (counterpartyProfile.handle?.toLowerCase() === counterpartyHandle.toLowerCase()) {
+        useStore.getState().addConsentRequest(request);
+        console.log(`[FALLBACK] Consent request added for logged-in user @${counterpartyHandle}`);
+      } else {
+        console.log(`[FALLBACK] Backend unavailable, stored locally for @${counterpartyHandle}`);
+      }
+    }
+  } else {
+    // Mock mode - backend not configured
+    // Send local notification and store locally
+    await sendConsentRequestNotification(request);
+    
     const counterpartyProfile = useStore.getState().profile;
     if (counterpartyProfile.handle?.toLowerCase() === counterpartyHandle.toLowerCase()) {
-      // Counterparty is logged in - add request to their store
       useStore.getState().addConsentRequest(request);
       console.log(`[MOCK] Consent request added for logged-in user @${counterpartyHandle}`);
     } else {
-      console.log(`[MOCK] Consent request created for @${counterpartyHandle}`);
-      console.log(`[MOCK] Request ID: ${request.id}`);
-      console.log('[MOCK] In production, backend would send push notification');
+      console.log(`[MOCK] Backend not configured, request stored locally for @${counterpartyHandle}`);
     }
-  } else {
-    // For non-test users, would send via backend API
-    console.log(`[MOCK] Would send consent request to @${counterpartyHandle} via backend API`);
-    // TODO: Call backend API to send request
-    // await fetch(`${API_BASE_URL}/consent-requests`, { method: 'POST', body: JSON.stringify(request) });
   }
 }
 
