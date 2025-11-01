@@ -22,10 +22,10 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <SafeAreaView 
-        style={[styles.safeArea, { backgroundColor: colors.background }]} 
+        style={[styles.safeArea, { backgroundColor: colors.surface }]} 
         edges={['top']}
       >
-        <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
+        <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.surface} />
         <Stack screenOptions={{ headerShown: false }} />
       </SafeAreaView>
     </SafeAreaProvider>
