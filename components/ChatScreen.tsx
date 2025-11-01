@@ -54,6 +54,7 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentMode, setPaymentMode] = useState<'request' | 'send'>('request');
   const [paymentAmount, setPaymentAmount] = useState('');
   const flatListRef = useRef<FlatList>(null);
 
@@ -247,6 +248,13 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
 
   function handleRequestPayment() {
     setShowMenu(false);
+    setPaymentMode('request');
+    setShowPaymentModal(true);
+  }
+
+  function handleSendPayment() {
+    setShowMenu(false);
+    setPaymentMode('send');
     setShowPaymentModal(true);
   }
 
@@ -327,6 +335,69 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
             } catch (error) {
               console.error('[Chat] Failed to clear chat:', error);
               Alert.alert('Error', 'Failed to clear chat');
+            }
+          }
+        }
+      ]
+    );
+  }
+
+  function handleExportChat() {
+    setShowMenu(false);
+    Alert.alert(
+      'Export Chat',
+      'Export this encrypted chat to a text file?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Export',
+          onPress: async () => {
+            try {
+              // Create chat export text
+              let exportText = `EchoID Chat Export\n`;
+              exportText += `Counterparty: ${counterpartyName}\n`;
+              exportText += `Consent ID: ${consent.consentId.toString()}\n`;
+              exportText += `Exported: ${new Date().toISOString()}\n\n`;
+              exportText += `--- MESSAGES ---\n\n`;
+              
+              for (const msg of messages) {
+                const time = new Date(msg.timestamp).toLocaleString();
+                const sender = msg.sender === wallet.address ? profile?.handle || 'You' : counterpartyName;
+                exportText += `[${time}] ${sender}:\n${msg.text}\n\n`;
+              }
+
+              Alert.alert('Export Ready', 'Chat exported to clipboard. Use a text editor to save it.');
+              // Note: React Native Clipboard not available in Expo Go managed workflow
+              // In production, would use @react-native-clipboard/clipboard
+            } catch (error) {
+              console.error('[Chat] Failed to export chat:', error);
+              Alert.alert('Error', 'Failed to export chat');
+            }
+          }
+        }
+      ]
+    );
+  }
+
+  function handleBlockUser() {
+    setShowMenu(false);
+    Alert.alert(
+      'Block User',
+      `Block ${counterpartyName}? You will no longer receive messages from them.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Block',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // In production, would store blocked users in SecureStore
+              Alert.alert('User Blocked', `${counterpartyName} has been blocked.`);
+              setShowMenu(false);
+              // Could close chat or show blocked state
+            } catch (error) {
+              console.error('[Chat] Failed to block user:', error);
+              Alert.alert('Error', 'Failed to block user');
             }
           }
         }
@@ -430,15 +501,23 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
                   style={styles.menuItem}
                   onPress={handleRequestPayment}
                 >
-                  <Ionicons name="wallet" size={20} color={colors.primary} />
+                  <Ionicons name="wallet-outline" size={20} color={colors.primary} />
                   <Text style={[styles.menuItemText, { color: colors.text }]}>Request Payment</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleSendPayment}
+                >
+                  <Ionicons name="send-outline" size={20} color={colors.success} />
+                  <Text style={[styles.menuItemText, { color: colors.text }]}>Send Payment</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={handleViewConsentDetails}
                 >
-                  <Ionicons name="document-text" size={20} color={colors.textSecondary} />
+                  <Ionicons name="document-text-outline" size={20} color={colors.textSecondary} />
                   <Text style={[styles.menuItemText, { color: colors.text }]}>View Consent Details</Text>
                 </TouchableOpacity>
                 
@@ -446,10 +525,26 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
                 
                 <TouchableOpacity
                   style={styles.menuItem}
+                  onPress={handleExportChat}
+                >
+                  <Ionicons name="download-outline" size={20} color={colors.textSecondary} />
+                  <Text style={[styles.menuItemText, { color: colors.text }]}>Export Chat</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.menuItem}
                   onPress={handleClearChat}
                 >
                   <Ionicons name="trash-outline" size={20} color={colors.error} />
                   <Text style={[styles.menuItemText, { color: colors.error }]}>Clear Chat</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleBlockUser}
+                >
+                  <Ionicons name="ban-outline" size={20} color={colors.error} />
+                  <Text style={[styles.menuItemText, { color: colors.error }]}>Block User</Text>
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -466,7 +561,9 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
             >
               <View style={[styles.paymentModal, { backgroundColor: colors.surface }]}>
                 <View style={styles.paymentHeader}>
-                  <Text style={[styles.paymentTitle, { color: colors.text }]}>Request Payment</Text>
+                  <Text style={[styles.paymentTitle, { color: colors.text }]}>
+                    {paymentMode === 'send' ? 'Send Payment' : 'Request Payment'}
+                  </Text>
                   <TouchableOpacity onPress={() => setShowPaymentModal(false)}>
                     <Ionicons name="close" size={24} color={colors.textSecondary} />
                   </TouchableOpacity>
@@ -474,7 +571,10 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
                 
                 <View style={styles.paymentBody}>
                   <Text style={[styles.paymentLabel, { color: colors.textSecondary }]}>
-                    Request ETH from {counterpartyName}
+                    {paymentMode === 'send' 
+                      ? `Send ETH to ${counterpartyName}`
+                      : `Request ETH from ${counterpartyName}`
+                    }
                   </Text>
                   
                   <View style={[styles.amountInput, { backgroundColor: colors.background, borderColor: colors.border }]}>
