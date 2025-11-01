@@ -182,6 +182,46 @@ This document tracks what has been implemented and what still needs to be done t
 - [ ] Performance optimization
 - [ ] Security review
 
+## 📋 What Still Needs to Be Done for Production
+
+### Critical (Must Have)
+1. **Smart Contract Deployment** ⚠️
+   - Deploy ConsentFactory to Base mainnet
+   - Set `EXPO_PUBLIC_FACTORY_ADDRESS` environment variable
+   - Verify contract ABI matches code
+   - Test on testnet first
+
+2. **Backend API Deployment** ⚠️
+   - Set up PostgreSQL database (local or cloud)
+   - Deploy backend server to hosting platform
+   - Configure environment variables
+   - Test all API endpoints
+
+3. **Push Notifications Configuration** ⚠️
+   - Configure APNs (iOS) in Expo dashboard
+   - Configure FCM (Android) in Expo dashboard
+   - Test notifications between devices
+   - Verify device token registration
+
+### Important (Should Have)
+4. **Environment Variables**
+   - Frontend: `EXPO_PUBLIC_FACTORY_ADDRESS`, `EXPO_PUBLIC_API_BASE_URL`
+   - Backend: `DATABASE_URL`, `EXPO_TOKEN`, `PORT`
+
+5. **Testing**
+   - End-to-end testing with real transactions
+   - Security audit of smart contracts
+   - Load testing of backend API
+   - Cross-platform testing (iOS/Android)
+
+### Optional (Nice to Have)
+6. **Production Hardening**
+   - Error tracking (Sentry)
+   - Analytics
+   - Rate limiting
+   - Database backups
+   - Monitoring/alerts
+
 ## 📋 Setup Steps Summary
 
 ### Quick Start (Development)

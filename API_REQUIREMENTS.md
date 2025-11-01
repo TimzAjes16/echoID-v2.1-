@@ -481,7 +481,60 @@ The current implementation works in **mock/offline mode** for testing:
 
 **Note:** The current codebase is designed to work with or without backend APIs. Mock mode allows full testing of the UI/UX flow. Blockchain transactions are **real and on-chain** once you deploy the contract and set the factory address.
 
-## 13. Recently Implemented Features
+## 13. What Still Needs to Be Done for Production
+
+### Critical Requirements (Must Complete)
+
+1. **Smart Contract Deployment** ⚠️ **BLOCKING**
+   - [ ] Deploy ConsentFactory contract to Base Sepolia testnet
+   - [ ] Test all contract functions on testnet
+   - [ ] Verify contract on Basescan
+   - [ ] Deploy to Base mainnet
+   - [ ] Set `EXPO_PUBLIC_FACTORY_ADDRESS` in `.env`
+   - [ ] Verify contract ABI matches `lib/sdk.ts`
+   - **Status:** Mock mode works for development, but production requires deployment
+
+2. **Backend API Deployment** ⚠️ **BLOCKING**
+   - [ ] Set up PostgreSQL database (local or cloud service)
+   - [ ] Configure `DATABASE_URL` environment variable
+   - [ ] Deploy backend to hosting platform (Heroku, Railway, AWS, etc.)
+   - [ ] Set `EXPO_PUBLIC_API_BASE_URL` in frontend `.env`
+   - [ ] Test all API endpoints
+   - [ ] Verify test users are seeded
+   - **Status:** Backend code exists, needs deployment
+
+3. **Push Notifications Setup** ⚠️ **BLOCKING**
+   - [ ] Configure APNs (iOS) in Expo dashboard (requires Apple Developer account)
+   - [ ] Configure FCM (Android) in Expo dashboard
+   - [ ] Test push notifications between real devices
+   - [ ] Verify device token registration works
+   - **Status:** Testing tools ready, needs credentials configuration
+
+### Important Requirements
+
+4. **Environment Variables Configuration**
+   - [ ] Set `EXPO_PUBLIC_FACTORY_ADDRESS` (after contract deployment)
+   - [ ] Set `EXPO_PUBLIC_API_BASE_URL` (after backend deployment)
+   - [ ] Configure backend `DATABASE_URL`
+   - [ ] Set `EXPO_PUBLIC_DEFAULT_CHAIN_ID` (8453 for Base mainnet)
+
+5. **Testing & Validation**
+   - [ ] End-to-end testing with real blockchain transactions
+   - [ ] Security audit of smart contracts
+   - [ ] Load testing of backend API
+   - [ ] Test on both iOS and Android devices
+   - [ ] Verify all workflows work in production mode
+
+### Optional Enhancements
+
+6. **Production Hardening**
+   - [ ] Set up error tracking (Sentry, etc.)
+   - [ ] Set up analytics
+   - [ ] Configure rate limiting
+   - [ ] Set up database backups
+   - [ ] Configure monitoring/alerts
+
+## 14. Recently Implemented Features
 
 ### Voice Recording & Coercion Detection ✅
 - **AI-based vocal analysis:**
