@@ -338,33 +338,29 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
 
             {/* Input Area */}
             <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
-              <View style={[styles.inputWrapper, { backgroundColor: colors.background }]}>
+              <View style={styles.inputWrapper}>
                 <TextInput
-                  style={[styles.input, { color: colors.text }]}
+                  style={[styles.input, { color: colors.text, backgroundColor: colors.background }]}
                   value={inputText}
                   onChangeText={setInputText}
-                  placeholder="Type a message..."
+                  placeholder="Message"
                   placeholderTextColor={colors.textSecondary}
                   multiline
                   maxLength={1000}
                 />
-                <TouchableOpacity
-                  style={[
-                    styles.sendButton,
-                    { 
-                      backgroundColor: inputText.trim() ? colors.primary : colors.border,
-                      opacity: inputText.trim() ? 1 : 0.5
-                    }
-                  ]}
-                  onPress={sendMessage}
-                  disabled={!inputText.trim()}
-                >
-                  <Ionicons 
-                    name="send" 
-                    size={20} 
-                    color={inputText.trim() ? '#fff' : colors.textSecondary} 
-                  />
-                </TouchableOpacity>
+                <View style={styles.inputActions}>
+                  <TouchableOpacity
+                    style={styles.sendButton}
+                    onPress={sendMessage}
+                    disabled={!inputText.trim()}
+                  >
+                    <Ionicons 
+                      name={inputText.trim() ? "send" : "happy"} 
+                      size={24} 
+                      color={inputText.trim() ? colors.primary : colors.textSecondary} 
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </KeyboardAvoidingView>
@@ -503,30 +499,36 @@ function createStyles(colors: any) {
     inputContainer: {
       paddingHorizontal: 16,
       paddingVertical: 12,
-      borderTopWidth: 1,
+      paddingBottom: Platform.OS === 'ios' ? 32 : 12,
+      borderTopWidth: StyleSheet.hairlineWidth,
     },
     inputWrapper: {
       flexDirection: 'row',
       alignItems: 'flex-end',
-      borderRadius: 24,
-      paddingHorizontal: 4,
-      paddingVertical: 4,
-      maxHeight: 100,
+      borderRadius: 20,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      minHeight: 44,
     },
     input: {
       flex: 1,
       fontSize: 16,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
+      paddingHorizontal: 8,
+      paddingVertical: 8,
+      minHeight: 36,
       maxHeight: 100,
+      borderRadius: 12,
+    },
+    inputActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginLeft: 8,
     },
     sendButton: {
       width: 36,
       height: 36,
-      borderRadius: 18,
       justifyContent: 'center',
       alignItems: 'center',
-      marginLeft: 8,
     },
   });
 }
