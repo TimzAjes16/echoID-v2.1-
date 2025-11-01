@@ -205,8 +205,8 @@ EXPO_PUBLIC_API_BASE_URL=https://api.echoid.xyz # Your backend URL
 
 # OPTIONAL (with defaults)
 EXPO_PUBLIC_DEFAULT_CHAIN_ID=8453 # Base
-EXPO_PUBLIC_TREASURY_ADDRESS=0x... # For fee collection (optional but recommended)
-EXPO_PUBLIC_PROTOCOL_FEE_WEI=1000000000000000 # 0.001 ETH in wei (optional, defaults to 0.001 ETH)
+EXPO_PUBLIC_TREASURY_ADDRESS=0x... # For fee collection
+EXPO_PUBLIC_PROTOCOL_FEE_WEI=1000000000000000 # 0.001 ETH
 ```
 
 ## Support

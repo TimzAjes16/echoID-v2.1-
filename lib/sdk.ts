@@ -140,17 +140,10 @@ export async function fetchRemoteConfig(): Promise<RemoteConfig> {
     console.warn('Failed to fetch remote config, using defaults:', error);
   }
 
-  // Default config - use environment variables if available, otherwise defaults
-  const protocolFeeWei = process.env.EXPO_PUBLIC_PROTOCOL_FEE_WEI 
-    ? process.env.EXPO_PUBLIC_PROTOCOL_FEE_WEI 
-    : parseEther('0.001').toString(); // Default: 0.001 ETH
-
-  const treasuryAddress = (process.env.EXPO_PUBLIC_TREASURY_ADDRESS ||
-    '0x0000000000000000000000000000000000000000') as Address;
-
+  // Default config
   return {
-    protocolFeeWei,
-    treasuryAddress,
+    protocolFeeWei: parseEther('0.001').toString(), // 0.001 ETH
+    treasuryAddress: '0x0000000000000000000000000000000000000000',
     defaultChainId: DEFAULT_CHAIN_ID,
     supportedChains: [8453, 420, 1101], // Base, Base Nova, Polygon zkEVM
     apiBaseUrl,
