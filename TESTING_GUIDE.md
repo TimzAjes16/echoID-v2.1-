@@ -138,11 +138,13 @@ See `EXPO_TOKEN_TESTING.md` for complete guide on testing Expo push notification
    - Confirm and pay protocol fee
 
 3. **Accept Consent (as counterparty):**
-   - Log in as test user
-   - Receive consent request notification
+   - Log in as test user (Sarah/Katie have 0.1 ETH)
+   - Receive consent request notification (or see in Requests screen)
    - Review request details
-   - Accept and pay protocol fee
+   - Accept and pay protocol fee (balance check passes)
    - Verify consent badge is minted
+   - Note: In mock mode, mock consent ID is generated
+   - Note: With deployed contract, real on-chain transaction occurs
 
 4. **Unlock Flow:**
    - Request unlock
@@ -151,18 +153,28 @@ See `EXPO_TOKEN_TESTING.md` for complete guide on testing Expo push notification
 
 ## Testing Environment Variables
 
-**For Testing:**
+**For Testing (Development/Mock Mode):**
 ```env
 # WalletConnect (configured)
 EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID=412ada4215e831396a0e19005bbd9823
 
-# Testnet (for blockchain testing)
-EXPO_PUBLIC_DEFAULT_CHAIN_ID=84532
-EXPO_PUBLIC_FACTORY_ADDRESS=<testnet_contract_address>
+# Factory Address (optional for development)
+# If not set, app uses mock mode (works without deployed contract)
+# EXPO_PUBLIC_FACTORY_ADDRESS=<testnet_contract_address>
+
+# Chain ID
+EXPO_PUBLIC_DEFAULT_CHAIN_ID=8453  # Base mainnet (or 84532 for testnet)
 
 # Backend (optional for testing)
-EXPO_PUBLIC_API_BASE_URL=http://localhost:3000
+# If not set, app uses mock mode with local test users
+# EXPO_PUBLIC_API_BASE_URL=http://localhost:3000
 ```
+
+**Note:** App works in mock mode without factory address:
+- Mock consent IDs generated for testing
+- Mock transaction hashes for unlock operations
+- Full workflow testable without deployed contract
+- Set `EXPO_PUBLIC_FACTORY_ADDRESS` only when contract is deployed
 
 ## Troubleshooting
 
@@ -187,6 +199,30 @@ EXPO_PUBLIC_API_BASE_URL=http://localhost:3000
 - Check handle is spelled correctly (lowercase)
 - Try mock mode if backend unavailable
 - Check `lib/testUsers.ts` for available users
+
+**Test User Balances:**
+- Test users have predefined balances in `lib/testUsers.ts`:
+  - `sarah`: 0.1 ETH
+  - `katie`: 0.1 ETH
+  - `mike`: 0 ETH
+- Balances are automatically assigned when logged in as test user
+- Balance shows on Profile screen when logged in as test user
+- Check console logs for balance lookup details
+
+**Consent Requests Not Showing:**
+- Requests persist across app restarts (stored in SecureStore)
+- If requests not visible, check:
+  1. Console logs: `[RequestsScreen] Request state:` - shows filtering details
+  2. Ensure you're logged in as the recipient (not sender)
+  3. Check `[Store] Loaded X consent requests from storage` on startup
+  4. Verify request was created with correct `counterpartyHandle`
+
+**Mock Mode:**
+- App automatically uses mock mode if factory address not set
+- Mock mode allows full workflow testing without deployed contract
+- Console shows `[MOCK]` warnings when in mock mode
+- Mock consent IDs and transaction hashes are generated
+- For production, deploy contract and set `EXPO_PUBLIC_FACTORY_ADDRESS`
 
 ## Additional Resources
 

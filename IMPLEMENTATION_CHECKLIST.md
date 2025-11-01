@@ -99,6 +99,12 @@ This document tracks what has been implemented and what still needs to be done t
 - [ ] Set `EXPO_PUBLIC_TREASURY_ADDRESS` for fee collection
 - [ ] Verify contract ABI matches `lib/sdk.ts`
 
+**Note:** App works in mock mode for development without deployed contract:
+- ✅ Mock consent creation returns test consent IDs
+- ✅ Mock unlock transactions return test hashes
+- ✅ Full workflow can be tested end-to-end
+- ⚠️ Production requires contract deployment
+
 ### 3. Environment Variables Configuration ⚠️ **CRITICAL**
 
 **Frontend (`.env`):**
@@ -255,6 +261,35 @@ This document tracks what has been implemented and what still needs to be done t
 
 ### Recent Implementations (Latest Session)
 
+**Mock Mode for Development:**
+- ✅ Mock consent creation when factory contract not deployed
+  - Returns mock consent IDs for development/testing
+  - Allows full workflow testing without deployed contract
+  - Clear console warnings about mock mode
+- ✅ Mock unlock request/approval transactions
+  - Returns mock transaction hashes in development
+  - Enables unlock flow testing without contract
+- ✅ Graceful fallback for production (when contract is deployed)
+
+**Test User System:**
+- ✅ Consolidated test data in `lib/testUsers.ts`
+  - All test users and balances in single source
+  - Katie: 0.1 ETH balance
+  - Sarah: 0.1 ETH balance
+  - Mike: 0 ETH balance
+- ✅ Balance lookup by handle or address
+- ✅ Automatic balance assignment for test users
+
+**Consent Requests Persistence:**
+- ✅ Requests persist across app restarts
+  - Stored in SecureStore for persistence
+  - Loaded automatically on app startup
+  - Survives user logouts/logins
+- ✅ Proper request filtering
+  - Only shows requests meant for current user
+  - Correct sender/recipient display
+  - Enhanced debugging logs
+
 **Expo Token Testing:**
 - Backend token configuration support (EXPO_TOKEN or EXPO_ACCESS_TOKEN)
 - Backend test endpoints for token verification and test notifications
@@ -276,12 +311,15 @@ This document tracks what has been implemented and what still needs to be done t
 - Payment confirmation dialogs with cost breakdown
 - Enhanced error messages for insufficient funds
 - Factory address validation before transactions
+- Test user balance support (Katie: 0.1 ETH, Sarah: 0.1 ETH)
 
 **Consent Requests:**
 - Fixed data integrity (full request stored before notification)
 - Proper handle and date display
 - Enhanced UI with better error handling
 - Payment confirmation before acceptance
+- Persistent storage across app restarts
+- Proper filtering for recipient vs sender
 
 **UI/UX:**
 - Dark mode support across all screens

@@ -359,11 +359,20 @@ EXPO_PUBLIC_INFURA_PROJECT_ID=your_infura_id (optional)
 
 The current implementation works in **mock/offline mode** for testing:
 - ✅ Handles created locally
-- ✅ Test users (`sarah`, `mike`) available
-- ✅ Consent requests stored locally
+- ✅ Test users (`sarah`, `katie`, `mike`) available with test balances
+  - Sarah: 0.1 ETH
+  - Katie: 0.1 ETH
+  - Mike: 0 ETH
+- ✅ Consent requests stored locally with persistence across app restarts
 - ✅ Local notifications (not push to other devices)
-- ✅ **Blockchain transactions are real** (when connected to mainnet/testnet)
+- ✅ **Mock blockchain transactions** (when factory contract not deployed)
+  - Mock consent IDs generated for development
+  - Mock transaction hashes for unlock operations
+  - Full workflow testable without deployed contract
+- ✅ **Real blockchain transactions** (when factory address configured)
 - ✅ **Wallet balance checking** (prevents insufficient funds errors)
+  - Test user balances from `lib/testUsers.ts`
+  - Real balances from blockchain
 - ✅ **Payment confirmation dialogs** (shows costs before transaction)
 - ✅ **AI-based coercion detection** (vocal intonation analysis)
 - ✅ **Template-specific voice phrases** (required consent phrases)
@@ -438,17 +447,25 @@ The current implementation works in **mock/offline mode** for testing:
 - All transactions are **legible and verifiable** on blockchain explorers
 
 ### Current Implementation Status
-- ✅ **On-chain transactions:** Fully implemented
+- ✅ **On-chain transactions:** Fully implemented (when contract deployed)
+- ✅ **Mock mode:** Development mode works without deployed contract
+  - Mock consent IDs for testing
+  - Mock transaction hashes for unlock operations
+  - Full workflow testable in development
 - ✅ **Event decoding:** Implemented (may need contract ABI verification)
-- ✅ **Protocol fee collection:** On-chain via payable function
+- ✅ **Protocol fee collection:** On-chain via payable function (when contract deployed)
 - ✅ **Multi-chain support:** Base, Nova, zkEVM ready
 - ✅ **Transaction validation:** Balance checks, gas estimation, address validation
 - ✅ **Payment confirmation:** User-facing dialogs with cost breakdown
 - ✅ **Error handling:** Enhanced messages for insufficient funds and transaction failures
 - ✅ **Wallet balance display:** Real-time balance fetching and display
+  - Test user balances (Sarah: 0.1 ETH, Katie: 0.1 ETH)
+  - Real blockchain balances
 - ✅ **AI coercion detection:** Vocal intonation analysis with risk scoring
 - ✅ **Template-specific phrases:** Required consent phrases per contract type
 - ✅ **Expo token testing:** Complete testing suite (backend endpoints, frontend utilities, CLI script, UI integration)
+- ✅ **Consent requests persistence:** Stored in SecureStore, survives app restarts
+- ✅ **Test user system:** Consolidated in `lib/testUsers.ts` with balances
 - ⚠️ **Contract deployment:** Needs to be done for production
 - ⚠️ **Backend API:** Mock mode (backend structure exists, needs deployment)
 - ⚠️ **Push notifications:** Local only (testing tools ready, needs APNs/FCM credentials and backend deployment)
