@@ -233,6 +233,52 @@ EXPO_PUBLIC_DEFAULT_CHAIN_ID=8453  # Base mainnet (or 84532 for testnet)
 - Mock consent IDs and transaction hashes are generated
 - For production, deploy contract and set `EXPO_PUBLIC_FACTORY_ADDRESS`
 
+## What Still Needs Testing for Production
+
+### Critical Testing Required
+
+1. **Blockchain Transactions** ⚠️
+   - [ ] Test with deployed contract on Base mainnet
+   - [ ] Verify consent creation with real transactions
+   - [ ] Verify protocol fee collection
+   - [ ] Test unlock request/approval flows
+   - [ ] Verify event decoding works correctly
+
+2. **Backend API Integration** ⚠️
+   - [ ] Test handle claiming with backend
+   - [ ] Test handle resolution with backend
+   - [ ] Test consent request creation via API
+   - [ ] Test push notification delivery
+   - [ ] Verify test users work with backend
+
+3. **Push Notifications** ⚠️
+   - [ ] Test notifications between two real devices
+   - [ ] Verify APNs configuration (iOS)
+   - [ ] Verify FCM configuration (Android)
+   - [ ] Test notification delivery reliability
+
+4. **End-to-End Workflows**
+   - [ ] Complete consent creation → acceptance → unlock flow
+   - [ ] Test with real transactions (not mock mode)
+   - [ ] Verify persistence across app restarts
+   - [ ] Test user switching and data isolation
+
+### Current Testing Status
+
+**✅ Works in Development:**
+- Mock mode (without deployed contract)
+- Test user workflows (Sarah, Katie with 0.1 ETH)
+- Local notifications
+- UI/UX flows
+- Balance checking with test users
+- Consent request persistence
+
+**⚠️ Needs Real Testing:**
+- Production blockchain transactions
+- Backend API integration
+- Push notifications between devices
+- Real user handle management
+
 ## Additional Resources
 
 - **WalletConnect Docs:** https://docs.walletconnect.com/
