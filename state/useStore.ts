@@ -69,9 +69,10 @@ interface AppState {
   
   // Consents
   consents: Consent[];
-  addConsent: (consent: Consent) => void;
-  updateConsent: (id: string, updates: Partial<Consent>) => void;
+  addConsent: (consent: Consent) => Promise<void>;
+  updateConsent: (id: string, updates: Partial<Consent>) => Promise<void>;
   getConsent: (id: string) => Consent | undefined;
+  loadConsents: () => Promise<Consent[]>;
   
   // Consent Requests (pending requests from others)
   consentRequests: ConsentRequest[];
@@ -92,6 +93,7 @@ interface AppState {
 
 const PROFILE_STORAGE_KEY = 'profile';
 const CONSENT_REQUESTS_STORAGE_KEY = 'consent_requests';
+const CONSENTS_STORAGE_KEY = 'consents';
 
 export const useStore = create<AppState>((set, get) => ({
   // Initial state
@@ -256,22 +258,66 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   // Consent actions
-  addConsent: (consent: Consent) => {
-    set((state) => ({
-      consents: [...state.consents, consent],
-    }));
+  addConsent: async (consent: Consent) => {
+    const newConsents = [...get().consents, consent];
+    set({ consents: newConsents });
+    
+    // Persist to SecureStore
+    try {
+      await SecureStore.setItemAsync(
+        CONSENTS_STORAGE_KEY,
+        JSON.stringify(newConsents.map(c => ({
+          ...c,
+          consentId: c.consentId.toString(), // Convert bigint to string for JSON
+        })))
+      );
+      console.log(`[Store] Consent persisted: ${consent.id} (consentId: ${consent.consentId.toString()})`);
+    } catch (error) {
+      console.error('[Store] Failed to persist consents:', error);
+    }
   },
 
-  updateConsent: (id: string, updates: Partial<Consent>) => {
-    set((state) => ({
-      consents: state.consents.map((c) =>
-        c.id === id ? { ...c, ...updates } : c
-      ),
-    }));
+  updateConsent: async (id: string, updates: Partial<Consent>) => {
+    const newConsents = get().consents.map((c) =>
+      c.id === id ? { ...c, ...updates } : c
+    );
+    set({ consents: newConsents });
+    
+    // Persist to SecureStore
+    try {
+      await SecureStore.setItemAsync(
+        CONSENTS_STORAGE_KEY,
+        JSON.stringify(newConsents.map(c => ({
+          ...c,
+          consentId: c.consentId.toString(), // Convert bigint to string for JSON
+        })))
+      );
+      console.log(`[Store] Consent updated and persisted: ${id}`);
+    } catch (error) {
+      console.error('[Store] Failed to persist consents:', error);
+    }
   },
 
   getConsent: (id: string) => {
     return get().consents.find((c) => c.id === id);
+  },
+  
+  loadConsents: async () => {
+    try {
+      const stored = await SecureStore.getItemAsync(CONSENTS_STORAGE_KEY);
+      if (stored) {
+        const consents = JSON.parse(stored).map((c: any) => ({
+          ...c,
+          consentId: BigInt(c.consentId), // Convert back to bigint
+        })) as Consent[];
+        set({ consents });
+        console.log(`[Store] Loaded ${consents.length} consents from storage`);
+        return consents;
+      }
+    } catch (error) {
+      console.error('[Store] Failed to load consents:', error);
+    }
+    return [];
   },
 
   // Consent Request actions
