@@ -55,6 +55,21 @@ This document outlines all APIs and services required to make EchoID production-
   
 - `DELETE /users/:handle/devices/:deviceId` - Unregister device
 
+### 1.5 Expo Token Testing API (Implemented) ✅
+**Test Endpoints:**
+- `GET /api/test-expo-token/verify` - Verify Expo token configuration
+  - No body required
+  - Returns: `{ success: boolean, message: string, details: {...} }`
+  - Verifies `EXPO_TOKEN` or `EXPO_ACCESS_TOKEN` environment variable
+  - Checks Expo SDK initialization
+  
+- `POST /api/test-expo-token/send-test` - Send test push notification
+  - Body: `{ pushToken: string }`
+  - Returns: `{ success: boolean, message: string, ticket: {...}, receiptId: string }`
+  - Validates push token format
+  - Sends test notification via Expo Push API
+  - Returns receipt ID for tracking
+
 ## 2. Push Notification Services
 
 ### 2.1 Expo Push Notification Service
