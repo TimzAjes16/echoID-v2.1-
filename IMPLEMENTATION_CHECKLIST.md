@@ -155,6 +155,12 @@ This document tracks what has been implemented and what still needs to be done t
   - Test getting push token from device
   - Test backend token configuration
   - Test sending notifications
+- [ ] Test WalletConnect integration
+  - Test connection flow with WalletConnect React Wallet (https://react-wallet.walletconnect.com)
+  - Test wallet: `0x2C9c86080A07E5bDc0D01eC4f2e7aef322242f78`
+  - Verify wallet connection works
+  - Test transaction signing
+  - Test session management
 - [ ] Test push notifications between devices
 - [ ] Test on both iOS and Android
 - [ ] Test with real transactions on testnet
@@ -229,6 +235,23 @@ This document tracks what has been implemented and what still needs to be done t
 - Test users are automatically seeded on first database initialization
 - Both test users and regular handles use the same API endpoints
 - The system falls back to local test users if backend is unavailable
+
+### Testing Resources
+
+**WalletConnect Test Wallet:**
+- **React Wallet Demo:** https://react-wallet.walletconnect.com
+- **Test Wallet Address:** `0x2C9c86080A07E5bDc0D01eC4f2e7aef322242f78`
+- **Use Case:** Test WalletConnect integration and transaction signing
+- **How to Use:**
+  1. Open https://react-wallet.walletconnect.com in a browser
+  2. Connect your EchoID app via WalletConnect QR code
+  3. Test wallet connection, signing, and transaction flows
+  4. Useful for testing without needing a physical wallet app
+
+**Test Users:**
+- `sarah` - Test user for consent request testing
+- `mike` - Test user for consent request testing
+- Both users available in database and mock mode
 
 ### Recent Implementations (Latest Session)
 
