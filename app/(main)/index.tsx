@@ -43,14 +43,14 @@ export default function HomeScreen() {
   }, [consentRequests.length]);
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
-      <View style={styles.container}>
+    <View style={styles.container}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.surface }]} edges={['top']}>
         <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
           <TouchableOpacity
             style={styles.menuButton}
             onPress={() => setDrawerVisible(true)}
           >
-            <Ionicons name="menu" size={24} color={colors.text} />
+            <Ionicons name="menu" size={22} color={colors.text} />
           </TouchableOpacity>
           <Text style={[styles.title, { color: colors.text }]}>My Badges</Text>
         <View style={styles.headerActions}>
@@ -72,7 +72,7 @@ export default function HomeScreen() {
             <Text style={styles.newButtonText}>+ New Consent</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
 
       {consents.length === 0 ? (
         <View style={styles.empty}>
@@ -90,16 +90,15 @@ export default function HomeScreen() {
         />
       )}
 
-        <Drawer visible={drawerVisible} onClose={() => setDrawerVisible(false)} />
-      </View>
-    </SafeAreaView>
+      <Drawer visible={drawerVisible} onClose={() => setDrawerVisible(false)} />
+    </View>
   );
 }
 
 function createStyles(colors: ReturnType<typeof getThemeColors>) {
   return StyleSheet.create({
   safeArea: {
-    flex: 1,
+    paddingBottom: 0,
   },
   container: {
     flex: 1,
@@ -109,28 +108,30 @@ function createStyles(colors: ReturnType<typeof getThemeColors>) {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
   },
   menuButton: {
-    padding: 8,
-    marginRight: 8,
+    padding: 6,
+    marginRight: 6,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '700',
     flex: 1,
+    letterSpacing: -0.3,
   },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   requestsButton: {
     backgroundColor: '#FF9800',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
     flexDirection: 'row',
     alignItems: 'center',
     position: 'relative',
@@ -140,48 +141,52 @@ function createStyles(colors: ReturnType<typeof getThemeColors>) {
     top: -4,
     right: -4,
     backgroundColor: '#F44336',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
+    borderRadius: 9,
+    minWidth: 18,
+    height: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: 3,
   },
   badgeText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
   },
   newButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
   },
   newButtonText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
   list: {
-    padding: 16,
+    padding: 12,
+    paddingTop: 16,
   },
   empty: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
+    paddingHorizontal: 32,
+    paddingTop: 60,
   },
   emptyText: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
-    marginBottom: 8,
-    color: colors.textSecondary,
+    marginBottom: 6,
+    color: colors.text,
+    letterSpacing: -0.2,
   },
   emptySubtext: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.textSecondary,
     textAlign: 'center',
+    lineHeight: 18,
   },
   });
 }

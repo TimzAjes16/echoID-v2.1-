@@ -1,7 +1,13 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useStore } from '../../state/useStore';
+import { getThemeColors } from '../../lib/theme';
 
 export default function HelpScreen() {
+  const { themeMode } = useStore();
+  const systemColorScheme = useColorScheme();
+  const colors = getThemeColors(themeMode, systemColorScheme);
+  const styles = createStyles(colors);
   const handleEmailSupport = () => {
     Linking.openURL('mailto:support@echoid.xyz?subject=EchoID Support Request');
   };
@@ -16,7 +22,7 @@ export default function HelpScreen() {
         <Text style={styles.sectionTitle}>Get Help</Text>
         
         <TouchableOpacity style={styles.helpItem} onPress={handleEmailSupport}>
-          <Ionicons name="mail-outline" size={24} color="#007AFF" />
+          <Ionicons name="mail-outline" size={24} color={colors.primary} />
           <View style={styles.helpContent}>
             <Text style={styles.helpTitle}>Email Support</Text>
             <Text style={styles.helpDescription}>
@@ -27,7 +33,7 @@ export default function HelpScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.helpItem} onPress={handleWebsite}>
-          <Ionicons name="globe-outline" size={24} color="#007AFF" />
+          <Ionicons name="globe-outline" size={24} color={colors.primary} />
           <View style={styles.helpContent}>
             <Text style={styles.helpTitle}>Help Center</Text>
             <Text style={styles.helpDescription}>
@@ -114,80 +120,84 @@ export default function HelpScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-  section: {
-    backgroundColor: '#fff',
-    marginTop: 16,
-    paddingVertical: 8,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  helpItem: {
-    flexDirection: 'row',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
-  },
-  helpContent: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  helpTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  helpDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-  },
-  helpValue: {
-    fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '500',
-  },
-  faqItem: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
-  },
-  faqQuestion: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-  },
-  faqAnswer: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-  },
-  contactItem: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
-  },
-  contactLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 4,
-  },
-  contactValue: {
-    fontSize: 14,
-    color: '#333',
-    lineHeight: 20,
-  },
-});
+function createStyles(colors: ReturnType<typeof getThemeColors>) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    section: {
+      backgroundColor: colors.surface,
+      marginTop: 12,
+      paddingVertical: 4,
+    },
+    sectionTitle: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.text,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    helpItem: {
+      flexDirection: 'row',
+      padding: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    helpContent: {
+      flex: 1,
+      marginLeft: 12,
+    },
+    helpTitle: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 3,
+    },
+    helpDescription: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginBottom: 3,
+    },
+    helpValue: {
+      fontSize: 13,
+      color: colors.primary,
+      fontWeight: '500',
+    },
+    faqItem: {
+      padding: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    faqQuestion: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 6,
+    },
+    faqAnswer: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      lineHeight: 19,
+    },
+    contactItem: {
+      padding: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    contactLabel: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      marginBottom: 3,
+    },
+    contactValue: {
+      fontSize: 13,
+      color: colors.text,
+      lineHeight: 19,
+    },
+  });
+}
 

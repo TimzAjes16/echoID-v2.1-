@@ -1,6 +1,12 @@
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, useColorScheme } from 'react-native';
+import { useStore } from '../../state/useStore';
+import { getThemeColors } from '../../lib/theme';
 
 export default function TermsScreen() {
+  const { themeMode } = useStore();
+  const systemColorScheme = useColorScheme();
+  const colors = getThemeColors(themeMode, systemColorScheme);
+  const styles = createStyles(colors);
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Terms of Service</Text>
@@ -171,40 +177,42 @@ export default function TermsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-  content: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#333',
-  },
-  lastUpdated: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 24,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  heading: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
-  },
-  text: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 22,
-    marginBottom: 8,
-  },
-});
+function createStyles(colors: ReturnType<typeof getThemeColors>) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      padding: 16,
+      paddingBottom: 32,
+    },
+    title: {
+      fontSize: 26,
+      fontWeight: 'bold',
+      marginBottom: 6,
+      color: colors.text,
+    },
+    lastUpdated: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginBottom: 20,
+    },
+    section: {
+      marginBottom: 20,
+    },
+    heading: {
+      fontSize: 17,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 10,
+    },
+    text: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      lineHeight: 21,
+      marginBottom: 6,
+    },
+  });
+}
 

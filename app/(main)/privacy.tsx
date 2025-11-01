@@ -1,6 +1,12 @@
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, useColorScheme } from 'react-native';
+import { useStore } from '../../state/useStore';
+import { getThemeColors } from '../../lib/theme';
 
 export default function PrivacyScreen() {
+  const { themeMode } = useStore();
+  const systemColorScheme = useColorScheme();
+  const colors = getThemeColors(themeMode, systemColorScheme);
+  const styles = createStyles(colors);
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Privacy Policy</Text>
@@ -197,58 +203,60 @@ export default function PrivacyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-  content: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#333',
-  },
-  lastUpdated: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
-  },
-  intro: {
-    fontSize: 16,
-    color: '#333',
-    lineHeight: 24,
-    marginBottom: 24,
-    fontStyle: 'italic',
-  },
-  section: {
-    marginBottom: 24,
-  },
-  heading: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
-  },
-  subheading: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  text: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 22,
-    marginBottom: 8,
-  },
-  bold: {
-    fontWeight: '600',
-    color: '#333',
-  },
-});
+function createStyles(colors: ReturnType<typeof getThemeColors>) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      padding: 16,
+      paddingBottom: 32,
+    },
+    title: {
+      fontSize: 26,
+      fontWeight: 'bold',
+      marginBottom: 6,
+      color: colors.text,
+    },
+    lastUpdated: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginBottom: 10,
+    },
+    intro: {
+      fontSize: 15,
+      color: colors.text,
+      lineHeight: 22,
+      marginBottom: 20,
+      fontStyle: 'italic',
+    },
+    section: {
+      marginBottom: 20,
+    },
+    heading: {
+      fontSize: 17,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 10,
+    },
+    subheading: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: colors.text,
+      marginTop: 10,
+      marginBottom: 6,
+    },
+    text: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      lineHeight: 21,
+      marginBottom: 6,
+    },
+    bold: {
+      fontWeight: '600',
+      color: colors.text,
+    },
+  });
+}
 
