@@ -268,12 +268,50 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
     }
 
     try {
-      // Send payment request as a special encrypted message
-      const paymentMessage = `💸 Payment Request: ${amount} ETH\n\nRequest ID: ${Date.now()}`;
-      
       if (!sessionKey || !wallet.address || !db) {
         Alert.alert('Error', 'Chat not initialized');
         return;
+      }
+
+      let paymentMessage: string;
+      let alertMessage: string;
+
+      if (paymentMode === 'send') {
+        // Actually send ETH on-chain
+        try {
+          const { createWalletClient, parseEther, http } = await import('viem');
+          const { base } = await import('viem/chains');
+          const { privateKeyToAccount } = await import('viem/accounts');
+          const { getLocalWallet } = await import('../lib/wallet');
+          
+          const localWallet = await getLocalWallet();
+          if (!localWallet) {
+            throw new Error('Local wallet not found');
+          }
+
+          const account = privateKeyToAccount(localWallet.privateKey);
+          const walletClient = createWalletClient({
+            account,
+            chain: wallet.chainId === 8453 ? base : base,
+            transport: http(),
+          });
+
+          const txHash = await walletClient.sendTransaction({
+            to: consent.counterparty as Address,
+            value: parseEther(amount.toString()),
+          });
+
+          paymentMessage = `💸 Payment Sent: ${amount} ETH\n\nTx: ${txHash}\nStatus: Confirming`;
+          alertMessage = `Successfully sent ${amount} ETH to ${counterpartyName}!\n\nTransaction: ${txHash}`;
+        } catch (error: any) {
+          console.error('[Chat] Failed to send payment:', error);
+          Alert.alert('Payment Failed', error.message || 'Failed to send payment. Please try again.');
+          return;
+        }
+      } else {
+        // Request payment (just a message)
+        paymentMessage = `💸 Payment Request: ${amount} ETH\n\nRequest ID: ${Date.now()}`;
+        alertMessage = `${amount} ETH payment request sent to ${counterpartyName}`;
       }
 
       const messageId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -304,7 +342,7 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
       const amountStr = paymentAmount;
       setPaymentAmount('');
       setShowPaymentModal(false);
-      Alert.alert('Payment Request Sent', `${amountStr} ETH payment request sent to ${counterpartyName}`);
+      Alert.alert('Success', alertMessage);
     } catch (error) {
       console.error('[Chat] Failed to send payment request:', error);
       Alert.alert('Error', 'Failed to send payment request');
@@ -591,7 +629,10 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
                   </View>
                   
                   <Text style={[styles.paymentHint, { color: colors.textSecondary }]}>
-                    The recipient will be notified and can approve the payment
+                    {paymentMode === 'send'
+                      ? 'This will send ETH from your wallet to the counterparty'
+                      : 'The recipient will be notified and can approve the payment'
+                    }
                   </Text>
                 </View>
                 
@@ -603,11 +644,13 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
                     <Text style={[styles.paymentButtonText, { color: colors.text }]}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.paymentButton, { backgroundColor: colors.primary }]}
+                    style={[styles.paymentButton, { backgroundColor: paymentMode === 'send' ? colors.success : colors.primary }]}
                     onPress={sendPaymentRequest}
                     disabled={!paymentAmount.trim()}
                   >
-                    <Text style={[styles.paymentButtonText, styles.paymentButtonPrimary]}>Request Payment</Text>
+                    <Text style={[styles.paymentButtonText, styles.paymentButtonPrimary]}>
+                      {paymentMode === 'send' ? 'Send ETH' : 'Request Payment'}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
