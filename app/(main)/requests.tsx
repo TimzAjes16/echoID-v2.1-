@@ -1,14 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useStore, ConsentRequest } from '../../state/useStore';
 import { acceptConsentRequest, rejectConsentRequest } from '../../lib/consentRequests';
+import { getAllUnreadCounts } from '../../lib/chatNotifications';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function ConsentRequestsScreen() {
   const router = useRouter();
-  const { consentRequests, removeConsentRequest, addConsent, wallet, profile } = useStore();
+  const { consentRequests, removeConsentRequest, addConsent, wallet, profile, consents } = useStore();
   const [processing, setProcessing] = useState<string | null>(null);
+  const [unreadCounts, setUnreadCounts] = useState<Map<bigint, number>>(new Map());
+
+  // Load unread counts for consents
+  useEffect(() => {
+    async function loadUnreadCounts() {
+      if (!wallet.address) return;
+      
+      const counts = await getAllUnreadCounts(wallet.address);
+      setUnreadCounts(counts);
+    }
+
+    loadUnreadCounts();
+    
+    // Refresh every 5 seconds when screen is visible
+    const interval = setInterval(loadUnreadCounts, 5000);
+    return () => clearInterval(interval);
+  }, [wallet.address]);
 
   // Filter requests to only show those meant for the current user (recipient)
   // Check if current user's handle matches the counterpartyHandle in the request
@@ -259,12 +277,26 @@ export default function ConsentRequestsScreen() {
         ? `${item.fromAddress.slice(0, 6)}...${item.fromAddress.slice(-4)}`
         : 'Unknown User';
 
+    // Find corresponding consent to get unread count
+    const consent = consents.find(c => 
+      c.counterpartyHandle?.toLowerCase() === item.fromHandle?.toLowerCase() ||
+      c.counterparty === item.fromAddress
+    );
+    const unreadCount = consent ? unreadCounts.get(consent.consentId) || 0 : 0;
+
     return (
       <View style={styles.requestCard}>
         <View style={styles.requestHeader}>
           <Ionicons name="document-text" size={24} color="#007AFF" />
           <View style={styles.requestInfo}>
-            <Text style={styles.fromHandle}>{displayHandle}</Text>
+            <View style={styles.handleRow}>
+              <Text style={styles.fromHandle}>{displayHandle}</Text>
+              {unreadCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+                </View>
+              )}
+            </View>
             <Text style={styles.template}>{item.template || 'Consent Request'}</Text>
             <Text style={styles.time}>{formattedDate}</Text>
           </View>
@@ -363,11 +395,30 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     flex: 1,
   },
+  handleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   fromHandle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
-    marginBottom: 4,
+  },
+  badge: {
+    backgroundColor: '#FF3B30',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 6,
+    marginLeft: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
   },
   template: {
     fontSize: 14,
