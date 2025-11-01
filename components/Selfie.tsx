@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, Platform } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { computeFaceHash } from '../lib/crypto';
 import * as FileSystem from 'expo-file-system';
@@ -41,12 +41,61 @@ export default function Selfie({ onCaptureComplete }: SelfieProps) {
         setImageUri(photo.uri);
         
         // Read image as bytes
-        const base64 = await FileSystem.readAsStringAsync(photo.uri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-        const imageBytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-        
-        onCaptureComplete(imageBytes);
+        try {
+          // Read as base64
+          const base64 = await FileSystem.readAsStringAsync(photo.uri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          
+          // Convert base64 to Uint8Array (React Native compatible)
+          // Helper function for base64 to Uint8Array conversion
+          const base64ToUint8Array = (base64Str: string): Uint8Array => {
+            // Remove data URL prefix if present
+            const cleanBase64 = base64Str.includes(',') ? base64Str.split(',')[1] : base64Str;
+            
+            // For React Native, we can use a polyfill or manual conversion
+            // Using manual conversion which works in React Native
+            if (typeof atob !== 'undefined') {
+              // atob is available (polyfilled)
+              const binaryString = atob(cleanBase64);
+              const bytes = new Uint8Array(binaryString.length);
+              for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+              }
+              return bytes;
+            } else {
+              // Manual base64 decoding (fallback)
+              const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+              const lookup = new Uint8Array(256);
+              for (let i = 0; i < chars.length; i++) {
+                lookup[chars.charCodeAt(i)] = i;
+              }
+              
+              const bufferLength = cleanBase64.length * 0.75;
+              const bytes = new Uint8Array(bufferLength);
+              
+              let p = 0;
+              for (let i = 0; i < cleanBase64.length; i += 4) {
+                const encoded1 = lookup[cleanBase64.charCodeAt(i)];
+                const encoded2 = lookup[cleanBase64.charCodeAt(i + 1)];
+                const encoded3 = lookup[cleanBase64.charCodeAt(i + 2)];
+                const encoded4 = lookup[cleanBase64.charCodeAt(i + 3)];
+                
+                bytes[p++] = (encoded1 << 2) | (encoded2 >> 4);
+                bytes[p++] = ((encoded2 & 15) << 4) | (encoded3 >> 2);
+                bytes[p++] = ((encoded3 & 3) << 6) | (encoded4 & 63);
+              }
+              
+              return bytes;
+            }
+          };
+          
+          const imageBytes = base64ToUint8Array(base64);
+          onCaptureComplete(imageBytes);
+        } catch (readError) {
+          console.error('Failed to read image:', readError);
+          throw new Error('Failed to process captured image');
+        }
       }
     } catch (error) {
       console.error('Failed to take picture:', error);

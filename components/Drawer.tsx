@@ -13,9 +13,23 @@ export default function Drawer({ visible, onClose }: DrawerProps) {
   const router = useRouter();
 
   const handleLogout = async () => {
-    await disconnectWallet();
-    router.replace('/(auth)');
-    onClose();
+    try {
+      // Close drawer first
+      onClose();
+      
+      // Disconnect wallet (clears WalletConnect, local wallet, and profile)
+      await disconnectWallet();
+      
+      // Small delay to ensure state is cleared
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Navigate to auth screen
+      router.replace('/(auth)');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still navigate to auth even if logout has errors
+      router.replace('/(auth)');
+    }
   };
 
   const handleProfile = () => {
