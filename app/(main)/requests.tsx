@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function ConsentRequestsScreen() {
   const router = useRouter();
-  const { consentRequests, removeConsentRequest, addConsent } = useStore();
+  const { consentRequests, removeConsentRequest, addConsent, wallet } = useStore();
   const [processing, setProcessing] = useState<string | null>(null);
 
   // Deduplicate consent requests by ID to prevent duplicate key errors
