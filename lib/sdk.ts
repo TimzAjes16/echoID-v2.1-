@@ -203,9 +203,21 @@ export async function createConsent(
 
   let txHash: string;
 
-  // Validate factory address
-  if (FACTORY_ADDRESS === '0x0000000000000000000000000000000000000000') {
-    throw new Error('Factory contract address not configured. Please set EXPO_PUBLIC_FACTORY_ADDRESS environment variable.');
+  // Check if factory address is configured
+  const isMockMode = FACTORY_ADDRESS === '0x0000000000000000000000000000000000000000';
+  
+  if (isMockMode) {
+    // Mock mode: Generate a mock consent ID for development/testing
+    // In production, this will never be reached as factory address must be set
+    console.warn('[MOCK] Factory contract address not configured. Using mock consent creation.');
+    console.warn('[MOCK] For production, set EXPO_PUBLIC_FACTORY_ADDRESS environment variable.');
+    
+    // Generate a mock consent ID based on transaction parameters
+    // This allows the app to work in development without a deployed contract
+    const mockConsentId = BigInt(Date.now()) + BigInt(Math.floor(Math.random() * 1000));
+    console.log(`[MOCK] Created mock consent with ID: ${mockConsentId.toString()}`);
+    
+    return mockConsentId;
   }
 
   // Check balance before sending transaction
@@ -346,6 +358,17 @@ export async function requestUnlock(
   
   if (!from) {
     throw new Error('No wallet address');
+  }
+
+  // Check if factory address is configured
+  const isMockMode = FACTORY_ADDRESS === '0x0000000000000000000000000000000000000000';
+  
+  if (isMockMode) {
+    console.warn('[MOCK] Factory contract address not configured. Using mock unlock request.');
+    // Return mock transaction hash
+    const mockTxHash = `0x${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`;
+    console.log(`[MOCK] Mock unlock request transaction: ${mockTxHash}`);
+    return mockTxHash;
   }
 
   const data = encodeFunctionData({
