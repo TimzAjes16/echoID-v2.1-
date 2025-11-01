@@ -238,12 +238,18 @@ export async function acceptConsentRequest(request: ConsentRequest): Promise<Con
     config.protocolFeeWei
   );
 
-  // Create consent object (now with on-chain consentId)
-  const consent: Consent = {
+  // Get current user info (the acceptor - Katie in this example)
+  const { profile: acceptorProfile } = useStore.getState();
+  const acceptorHandle = acceptorProfile?.handle;
+  const acceptorAddress = wallet.address;
+
+  // Create consent object for acceptor (Katie)
+  // This consent shows Katie's perspective: counterparty is Sarah
+  const consentForAcceptor: Consent = {
     id: `consent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     consentId,
-    counterparty: request.fromAddress,
-    counterpartyHandle: request.fromHandle,
+    counterparty: request.fromAddress, // Sarah's address (the requester)
+    counterpartyHandle: request.fromHandle, // Sarah's handle
     template: request.template,
     createdAt: Date.now(),
     lockedUntil: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
@@ -259,13 +265,44 @@ export async function acceptConsentRequest(request: ConsentRequest): Promise<Con
     status: 'active',
   };
 
+  // Also create a consent for the requester (Sarah) so she can see it too
+  // This consent shows Sarah's perspective: counterparty is Katie
+  const consentForRequester: Consent = {
+    ...consentForAcceptor,
+    id: `consent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_requester`,
+    counterparty: acceptorAddress!, // Katie's address (the acceptor)
+    counterpartyHandle: acceptorHandle || undefined, // Katie's handle
+  };
+
+  // Store both consents so both parties can see them
+  // In a real app, this would be handled by backend/blockchain querying
+  // For now, we'll store the requester's consent in a shared location
+  // that will be loaded when they log in
+  const storeState = useStore.getState();
+  
+  // Add acceptor's consent (already done by caller, but ensure it's there)
+  // The requester's consent will be added when they next log in (via loadConsents)
+  // OR we can add it now if we're in mock mode and both are test users
+  
+  // Check if requester is a test user - if so, add their consent too
+  const { isTestUser } = await import('./testUsers');
+  if (isTestUser(request.fromHandle)) {
+    // In mock mode with test users, add requester's consent immediately
+    await storeState.addConsent(consentForRequester);
+    console.log(`[acceptConsentRequest] Added consent for requester @${request.fromHandle}`);
+  } else {
+    // For non-test users, consent will be loaded from backend/blockchain when they log in
+    console.log(`[acceptConsentRequest] Requester @${request.fromHandle} will see consent when they query blockchain/backend`);
+  }
+
   // In a real app with full flow:
   // 1. Acceptor would do their own voice/selfie verification
   // 2. Both verifications would be combined
   // 3. Consent would be created on-chain with both parties' data
   // 4. Two SBTs would be minted (one for each party)
+  // 5. Both parties query blockchain for consents involving their address
 
-  return consent;
+  return consentForAcceptor; // Return acceptor's perspective
 }
 
 /**

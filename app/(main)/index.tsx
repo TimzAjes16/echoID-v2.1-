@@ -78,21 +78,46 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {consents.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyText}>No consents yet</Text>
-          <Text style={styles.emptySubtext}>
-            Create your first consent verification to get started
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={consents}
-          renderItem={({ item }) => <BadgeCard consent={item} />}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-        />
-      )}
+      {(() => {
+        // Filter consents to show only those involving the current user
+        // A consent should be visible if:
+        // 1. The current user's address matches the counterparty (user is party 1)
+        // 2. OR the consent was created/accepted by current user (user is party 2)
+        // For now, show all consents (in production, would filter by wallet address)
+        const currentAddress = wallet?.address?.toLowerCase();
+        const currentHandle = profile?.handle?.toLowerCase();
+        
+        const filteredConsents = consents.filter((consent) => {
+          if (!currentAddress && !currentHandle) return false;
+          
+          // Show if user is the counterparty by address
+          const counterpartyMatch = consent.counterparty?.toLowerCase() === currentAddress;
+          
+          // For test users, also check by handle
+          const counterpartyHandle = consent.counterpartyHandle?.toLowerCase();
+          const handleMatch = counterpartyHandle === currentHandle;
+          
+          // Show consent if user is involved as counterparty or if we can't determine (show all in mock mode)
+          // In production, this would query blockchain for consents involving user's address
+          return counterpartyMatch || handleMatch || (!consent.counterpartyHandle && !currentHandle);
+        });
+        
+        return filteredConsents.length === 0 ? (
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>No consents yet</Text>
+            <Text style={styles.emptySubtext}>
+              Create your first consent verification to get started
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredConsents}
+            renderItem={({ item }) => <BadgeCard consent={item} />}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.list}
+          />
+        );
+      })()}
 
       <Drawer visible={drawerVisible} onClose={() => setDrawerVisible(false)} />
     </View>
