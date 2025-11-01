@@ -51,13 +51,7 @@ export default function Selfie({ onCaptureComplete }: SelfieProps) {
       
       // Read image as bytes
       try {
-        // Check if file exists
-        const fileInfo = await FileSystem.getInfoAsync(photo.uri);
-        if (!fileInfo.exists) {
-          throw new Error('Photo file does not exist');
-        }
-
-        // Read as base64
+        // Read as base64 (file existence check removed - read will fail if file doesn't exist)
         const base64 = await FileSystem.readAsStringAsync(photo.uri, {
           encoding: FileSystem.EncodingType.Base64,
         });
