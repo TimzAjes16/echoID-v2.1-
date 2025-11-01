@@ -393,3 +393,21 @@ export function formatFee(feeWei: string, chainId: number = DEFAULT_CHAIN_ID): s
   return `${eth} ${symbol}`;
 }
 
+/**
+ * Get wallet balance
+ */
+export async function getWalletBalance(
+  address: Address,
+  chainId: number = DEFAULT_CHAIN_ID
+): Promise<string> {
+  const publicClient = getPublicClient(chainId);
+  
+  try {
+    const balance = await publicClient.getBalance({ address });
+    return formatEther(balance);
+  } catch (error) {
+    console.error('Failed to get wallet balance:', error);
+    throw new Error('Failed to fetch wallet balance');
+  }
+}
+

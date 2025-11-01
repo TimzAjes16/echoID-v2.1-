@@ -1,21 +1,52 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { useStore } from '../../state/useStore';
 import QRCodeView from '../../components/QRCodeView';
 import QRScanner from '../../components/QRScanner';
 import { claimHandle, resolveHandle, getSignatureChallenge, verifyHandleSignature } from '../../lib/handles';
 import { signMessage } from '../../lib/walletconnect';
 import { getDeviceKeypair } from '../../lib/crypto';
+import { getWalletBalance } from '../../lib/sdk';
+import { formatEther } from 'viem';
+import type { Address } from 'viem';
 
 export default function ProfileScreen() {
   const { wallet, profile, setProfile, loadProfile } = useStore();
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [newHandle, setNewHandle] = useState('');
   const [isClaiming, setIsClaiming] = useState(false);
+  const [balance, setBalance] = useState<string | null>(null);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
 
   useEffect(() => {
     loadProfile();
   }, []);
+
+  useEffect(() => {
+    if (wallet.address) {
+      loadWalletBalance();
+    } else {
+      setBalance(null);
+    }
+  }, [wallet.address, wallet.chainId]);
+
+  async function loadWalletBalance() {
+    if (!wallet.address) return;
+    
+    setIsLoadingBalance(true);
+    try {
+      const balanceWei = await getWalletBalance(
+        wallet.address as Address,
+        wallet.chainId || 8453
+      );
+      setBalance(balanceWei);
+    } catch (error: any) {
+      console.error('Failed to load wallet balance:', error);
+      setBalance(null);
+    } finally {
+      setIsLoadingBalance(false);
+    }
+  }
 
   async function handleClaimHandle() {
     if (!newHandle.trim() || !wallet.session || !wallet.address) {
@@ -117,6 +148,28 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>My Wallet</Text>
         <View style={styles.walletCard}>
+          <View style={styles.balanceSection}>
+            <Text style={styles.balanceLabel}>Balance</Text>
+            {isLoadingBalance ? (
+              <ActivityIndicator size="small" color="#007AFF" style={{ marginVertical: 8 }} />
+            ) : balance !== null ? (
+              <Text style={styles.balanceValue}>
+                {parseFloat(balance).toFixed(4)} ETH
+              </Text>
+            ) : (
+              <Text style={styles.balanceError}>Unable to load</Text>
+            )}
+            <TouchableOpacity 
+              style={styles.refreshButton}
+              onPress={loadWalletBalance}
+              disabled={isLoadingBalance}
+            >
+              <Text style={styles.refreshButtonText}>
+                {isLoadingBalance ? 'Loading...' : 'Refresh'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.walletInfo}>
             <Text style={styles.walletLabel}>Wallet Address</Text>
             <Text style={styles.walletValue} selectable>{wallet.address}</Text>
@@ -206,6 +259,46 @@ const styles = StyleSheet.create({
   },
   walletCard: {
     marginTop: 8,
+  },
+  balanceSection: {
+    backgroundColor: '#F0F9FF',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0F2FE',
+  },
+  balanceLabel: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 8,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  balanceValue: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#007AFF',
+    marginBottom: 12,
+    letterSpacing: -0.5,
+  },
+  balanceError: {
+    fontSize: 14,
+    color: '#F44336',
+    marginBottom: 12,
+  },
+  refreshButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  refreshButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
   },
   walletInfo: {
     marginBottom: 20,
