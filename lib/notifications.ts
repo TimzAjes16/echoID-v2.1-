@@ -7,6 +7,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -40,6 +42,13 @@ export async function requestNotificationPermissions(): Promise<boolean> {
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('consent-requests', {
         name: 'Consent Requests',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
+      
+      await Notifications.setNotificationChannelAsync('chat-messages', {
+        name: 'Chat Messages',
         importance: Notifications.AndroidImportance.HIGH,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#FF231F7C',
@@ -87,6 +96,32 @@ export async function getNotificationToken(): Promise<string | null> {
 }
 
 /**
+ * Send chat message notification
+ */
+export async function sendChatMessageNotification(
+  senderHandle: string,
+  messagePreview: string,
+  consentId: string
+): Promise<void> {
+  await requestNotificationPermissions();
+  
+  // Truncate long messages
+  const truncated = messagePreview.length > 50 
+    ? messagePreview.substring(0, 50) + '...' 
+    : messagePreview;
+  
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: `New message from @${senderHandle}`,
+      body: truncated,
+      data: { consentId, type: 'chat_message' },
+      sound: true,
+    },
+    trigger: null, // Send immediately
+  });
+}
+
+/**
  * Setup notification listener for handling incoming notifications
  */
 export function setupNotificationListener(
@@ -103,7 +138,7 @@ export function setupNotificationListener(
         // Try to get the full request from the Zustand store
         // This works because requests are stored locally when created
         const { useStore } = await import('../state/useStore');
-        const fullRequest = useStore.getState().getConsentRequest(data.requestId);
+        const fullRequest = useStore.getState().getConsentRequest(String(data.requestId));
         
         if (fullRequest) {
           // Full request already in store, trigger callback
