@@ -20,7 +20,6 @@ import { resolveHandle } from '../lib/handles';
 import { getTestUserByAddress } from '../lib/testUsers';
 import { Ionicons } from '@expo/vector-icons';
 import { getThemeColors } from '../lib/theme';
-import { sendChatMessageNotification } from '../lib/notifications';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -280,33 +279,11 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
       
       setMessages((prev) => [...prev, newMessage]);
       
-      // Send notification to counterparty if they're logged in (mock mode behavior)
-      try {
-        const { isTestUser } = await import('../lib/testUsers');
-        const counterpartyHandle = consent.counterpartyHandle?.toLowerCase();
-        const currentLoggedInHandle = storeState.profile?.handle?.trim().toLowerCase();
-        
-        // Only send notification if:
-        // 1. Counterparty handle exists
-        // 2. Counterparty is a test user OR they're the currently logged in user
-        // 3. The counterparty is NOT the sender
-        if (
-          counterpartyHandle &&
-          profile?.handle &&
-          counterpartyHandle !== profile.handle.toLowerCase() &&
-          (isTestUser(counterpartyHandle) || currentLoggedInHandle === counterpartyHandle)
-        ) {
-          await sendChatMessageNotification(
-            profile.handle,
-            textToSend,
-            consent.consentId.toString()
-          );
-          console.log(`[Chat] Notification sent to @${counterpartyHandle}`);
-        }
-      } catch (notifError) {
-        console.error('[Chat] Failed to send notification:', notifError);
-        // Don't fail the message send if notification fails
-      }
+      // Note: In production with backend integration, notifications would be sent via:
+      // 1. Backend receives message from sender
+      // 2. Backend sends Expo Push Notification to recipient's device
+      // 3. Recipient receives notification on their device
+      // Currently in mock mode on single device, so no cross-device notifications
     } catch (error) {
       console.error('[Chat] Failed to send message:', error);
       setInputText(textToSend); // Restore text on error
