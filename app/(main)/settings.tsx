@@ -5,6 +5,7 @@ import { useStore } from '../../state/useStore';
 import { Ionicons } from '@expo/vector-icons';
 import { getThemeColors, type ThemeMode } from '../../lib/theme';
 import { runCompleteExpoTokenTest } from '../../lib/testExpoToken';
+import * as SQLite from 'expo-sqlite';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -235,6 +236,40 @@ export default function SettingsScreen() {
           <Ionicons name="help-circle-outline" size={24} color={colors.text} />
           <Text style={styles.settingLabel}>Help & Support</Text>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Developer</Text>
+        
+        <TouchableOpacity 
+          style={styles.settingItem} 
+          onPress={async () => {
+            Alert.alert(
+              'Clear All Chat Data',
+              'This will delete all chat messages from your local database. This action cannot be undone.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Delete',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      const db = await SQLite.openDatabaseAsync('echoid_chat.db');
+                      await db.execAsync('DELETE FROM messages;');
+                      Alert.alert('Success', 'All chat messages deleted');
+                    } catch (error) {
+                      console.error('Failed to clear chat:', error);
+                      Alert.alert('Error', 'Failed to clear chat data');
+                    }
+                  }
+                }
+              ]
+            );
+          }}
+        >
+          <Ionicons name="trash-outline" size={24} color={colors.error} />
+          <Text style={[styles.settingLabel, { color: colors.error }]}>Clear All Chat Data</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
