@@ -113,25 +113,20 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
     }
 
     try {
-      // Get current user's device pubkey from profile or deviceKeypair
+      // Get current user's device pubkey from profile
       let myDevicePubKey: Uint8Array | null = null;
       
-      if (profile?.devicePubKey) {
-        // Use profile's devicePubKey (for test users with static keys)
-        const binaryString = atob(profile.devicePubKey);
-        myDevicePubKey = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          myDevicePubKey[i] = binaryString.charCodeAt(i);
-        }
-      } else if (deviceKeypair?.publicKey) {
-        // Fallback to deviceKeypair from SecureStore
-        myDevicePubKey = deviceKeypair.publicKey;
-      }
-      
-      if (!myDevicePubKey) {
-        console.error('[Chat] No device pubkey available');
+      if (!profile?.devicePubKey) {
+        console.error('[Chat] No device pubkey in profile');
         setIsLoading(false);
         return;
+      }
+      
+      // Decode base64 devicePubKey to Uint8Array
+      const binaryString = atob(profile.devicePubKey);
+      myDevicePubKey = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        myDevicePubKey[i] = binaryString.charCodeAt(i);
       }
 
       // Get counterparty device pubkey from handle
