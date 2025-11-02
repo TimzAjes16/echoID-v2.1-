@@ -534,7 +534,46 @@ The current implementation works in **mock/offline mode** for testing:
    - [ ] Set up database backups
    - [ ] Configure monitoring/alerts
 
-## 14. Recently Implemented Features
+## 14. Chat System Implementation ✅ **COMPLETE**
+
+**End-to-End Encrypted Chat:**
+- ✅ Modern WhatsApp/Messenger/Instagram DM-style interface
+- ✅ XChaCha20-Poly1305 encryption for messages
+- ✅ Persistent chat history in local SQLite database
+- ✅ Session key derivation from device public keys and consent ID
+- ✅ Cross-platform encryption/decryption
+
+**User Experience:**
+- ✅ Message bubbles (blue for sent, gray for received)
+- ✅ Avatar icons with correct sender attribution (S/K/M for test users)
+- ✅ Date separators and relative time display
+- ✅ Auto-scroll to latest message
+- ✅ Keyboard-aware input area
+- ✅ Emoji picker integration
+- ✅ Send button (paper plane icon)
+
+**Advanced Features:**
+- ✅ Payment request/send functionality in chat
+  - Request payment from counterparty
+  - Send real ETH transactions on-chain
+- ✅ Export chat functionality
+- ✅ Clear chat functionality
+- ✅ Block/unblock user functionality
+  - Block users from chat ellipsis menu
+  - View and manage blocked users in Settings
+  - Chat shows 'User Blocked' state
+  - Cannot send/receive messages from blocked users
+- ✅ Unread message badges on requests and consent details
+- ✅ Real-time unread message count tracking
+- ✅ Dark mode/theme support
+
+**Technical Implementation:**
+- ✅ Persistent storage with SQLite
+- ✅ Message encryption using shared session keys
+- ✅ Test user wallet integration for consistent avatars
+- ✅ Counterparty lookup by wallet address
+
+## 15. Recently Implemented Features
 
 ### Voice Recording & Coercion Detection ✅
 - **AI-based vocal analysis:**

@@ -90,6 +90,15 @@ EchoID includes test users for testing consent requests and handle resolution.
 2. Should resolve to test user's wallet address
 3. Works in both mock mode and with backend
 
+**For Chat Testing:**
+1. Create a consent with test user (e.g., Sarah creates consent with Katie)
+2. Open chat from consent details page
+3. Send messages from both parties
+4. Verify correct avatars display (S for Sarah, K for Katie)
+5. Check unread badges appear correctly
+6. Test payment send/request from chat
+7. Test block/unblock functionality
+
 ## Expo Token Testing
 
 See `EXPO_TOKEN_TESTING.md` for complete guide on testing Expo push notifications.
@@ -155,7 +164,16 @@ See `EXPO_TOKEN_TESTING.md` for complete guide on testing Expo push notification
    - Note: In mock mode, mock consent ID is generated
    - Note: With deployed contract, real on-chain transaction occurs
 
-4. **Unlock Flow:**
+4. **Chat Flow:**
+   - Open chat from consent details page
+   - Send messages from both parties
+   - Verify correct avatars display (S for Sarah, K for Katie)
+   - Check unread badges update correctly
+   - Test payment send/request from chat
+   - Test block/unblock user functionality
+   - Verify blocked users cannot send/receive messages
+
+5. **Unlock Flow:**
    - Request unlock
    - Approve unlock
    - Verify consent is unlocked
@@ -272,6 +290,9 @@ EXPO_PUBLIC_DEFAULT_CHAIN_ID=8453  # Base mainnet (or 84532 for testnet)
 - UI/UX flows
 - Balance checking with test users
 - Consent request persistence
+- End-to-end encrypted chat with test users
+- Block/unblock user functionality
+- Chat message persistence
 
 **⚠️ Needs Real Testing:**
 - Production blockchain transactions

@@ -20,6 +20,7 @@ This document tracks what has been implemented and what still needs to be done t
 - [x] Test users support
 - [x] UK law compliant legal pages
 - [x] Logout functionality (fixed)
+- [x] Block/unblock user functionality
 
 ### Advanced Features
 - [x] AI-based coercion detection with vocal intonation analysis
@@ -366,4 +367,24 @@ This document tracks what has been implemented and what still needs to be done t
 - Minimal, clean design improvements
 - Fixed React Native key warnings
 - Improved theme-aware SafeAreaView handling
+
+**Chat System:**
+- ✅ Modern WhatsApp/Messenger/Instagram DM-style chat interface
+- ✅ End-to-end encrypted messages (XChaCha20-Poly1305)
+- ✅ Persistent chat history in local SQLite database
+- ✅ Message avatars with correct sender attribution (S/K/M for test users)
+- ✅ Date separators and relative time display
+- ✅ Auto-scroll to latest message
+- ✅ Keyboard-aware input area
+- ✅ Emoji picker integration
+- ✅ Unread message badges on requests and consent details
+- ✅ Clear chat functionality
+- ✅ Export chat functionality
+- ✅ Block/unblock user functionality
+  - Block users from chat ellipsis menu
+  - View and manage blocked users in Settings
+  - Chat shows 'User Blocked' state when counterparty is blocked
+  - Cannot send/receive messages from blocked users
+- ✅ Payment request/send functionality in chat
+- ✅ Real-time unread message count tracking
 
