@@ -20,7 +20,6 @@ import { resolveHandle } from '../lib/handles';
 import { getTestUserByAddress } from '../lib/testUsers';
 import { Ionicons } from '@expo/vector-icons';
 import { getThemeColors } from '../lib/theme';
-import { sendChatMessageNotification } from '../lib/notifications';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -279,19 +278,9 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
       
       setMessages((prev) => [...prev, newMessage]);
       
-      // Send notification to counterparty about new message
-      try {
-        if (profile?.handle && consent.counterpartyHandle) {
-          await sendChatMessageNotification(
-            profile.handle,
-            textToSend,
-            consent.consentId.toString()
-          );
-        }
-      } catch (notifError) {
-        console.error('[Chat] Failed to send notification:', notifError);
-        // Don't fail the message send if notification fails
-      }
+      // Note: Local notifications are only sent by the device receiving the message.
+      // In production with backend integration, we would send push notifications
+      // to the counterparty's device via Expo Push Notifications API.
     } catch (error) {
       console.error('[Chat] Failed to send message:', error);
       setInputText(textToSend); // Restore text on error
