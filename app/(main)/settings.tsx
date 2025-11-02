@@ -9,7 +9,7 @@ import * as SQLite from 'expo-sqlite';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { wallet, profile, themeMode, setThemeMode, loadThemeMode } = useStore();
+  const { wallet, profile, themeMode, setThemeMode, loadThemeMode, blockedUsers, unblockUser, loadBlockedUsers } = useStore();
   const systemColorScheme = useColorScheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
@@ -20,6 +20,7 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     loadThemeMode();
+    loadBlockedUsers();
   }, []);
 
   const handleThemeChange = async (value: boolean) => {
@@ -28,6 +29,23 @@ export default function SettingsScreen() {
   };
 
   const isDarkMode = themeMode === 'dark' || (themeMode === 'auto' && systemColorScheme === 'dark');
+
+  const handleUnblock = async (user: string) => {
+    Alert.alert(
+      'Unblock User',
+      `Unblock ${user}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Unblock',
+          onPress: async () => {
+            await unblockUser(user);
+            Alert.alert('Success', `${user} has been unblocked`);
+          }
+        }
+      ]
+    );
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -197,6 +215,36 @@ export default function SettingsScreen() {
           <Text style={[styles.settingLabel, styles.dangerText]}>Delete Account</Text>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Blocked Users</Text>
+        
+        {blockedUsers.length === 0 ? (
+          <View style={styles.settingItem}>
+            <Ionicons name="checkmark-circle-outline" size={24} color={colors.textSecondary} />
+            <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>
+              No blocked users
+            </Text>
+          </View>
+        ) : (
+          blockedUsers.map((user) => (
+            <TouchableOpacity
+              key={user}
+              style={styles.settingItem}
+              onPress={() => handleUnblock(user)}
+            >
+              <Ionicons name="ban" size={24} color={colors.error} />
+              <Text style={styles.settingLabel}>{user.startsWith('0x') ? `${user.slice(0, 8)}...${user.slice(-6)}` : `@${user}`}</Text>
+              <TouchableOpacity
+                onPress={() => handleUnblock(user)}
+                style={{ padding: 4 }}
+              >
+                <Ionicons name="close-circle" size={24} color={colors.error} />
+              </TouchableOpacity>
+            </TouchableOpacity>
+          ))
+        )}
       </View>
 
       <View style={styles.section}>

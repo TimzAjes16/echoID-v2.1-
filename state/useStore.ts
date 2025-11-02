@@ -89,11 +89,19 @@ interface AppState {
   themeMode: ThemeMode;
   setThemeMode: (mode: ThemeMode) => Promise<void>;
   loadThemeMode: () => Promise<void>;
+  
+  // Blocked users
+  blockedUsers: string[]; // Array of wallet addresses or handles
+  blockUser: (identifier: string) => Promise<void>;
+  unblockUser: (identifier: string) => Promise<void>;
+  isUserBlocked: (identifier: string) => boolean;
+  loadBlockedUsers: () => Promise<void>;
 }
 
 const PROFILE_STORAGE_KEY = 'profile';
 const CONSENT_REQUESTS_STORAGE_KEY = 'consent_requests';
 const CONSENTS_STORAGE_KEY = 'consents';
+const BLOCKED_USERS_STORAGE_KEY = 'blocked_users';
 
 export const useStore = create<AppState>((set, get) => ({
   // Initial state
@@ -111,6 +119,7 @@ export const useStore = create<AppState>((set, get) => ({
   consents: [],
   consentRequests: [],
   deviceKeypair: null,
+  blockedUsers: [],
 
   // Wallet actions
   connectLocalWallet: async () => {
@@ -394,6 +403,63 @@ export const useStore = create<AppState>((set, get) => ({
       set({ themeMode: mode });
     } catch (error) {
       console.error('Failed to load theme mode:', error);
+    }
+  },
+
+  // Blocked users actions
+  blockUser: async (identifier: string) => {
+    const currentBlocked = get().blockedUsers;
+    if (currentBlocked.includes(identifier.toLowerCase())) {
+      return; // Already blocked
+    }
+    
+    const newBlocked = [...currentBlocked, identifier.toLowerCase()];
+    set({ blockedUsers: newBlocked });
+    
+    // Persist to SecureStore
+    try {
+      await SecureStore.setItemAsync(
+        BLOCKED_USERS_STORAGE_KEY,
+        JSON.stringify(newBlocked)
+      );
+      console.log(`[Store] User blocked: ${identifier}`);
+    } catch (error) {
+      console.error('[Store] Failed to persist blocked users:', error);
+    }
+  },
+
+  unblockUser: async (identifier: string) => {
+    const newBlocked = get().blockedUsers.filter(
+      (id) => id !== identifier.toLowerCase()
+    );
+    set({ blockedUsers: newBlocked });
+    
+    // Persist to SecureStore
+    try {
+      await SecureStore.setItemAsync(
+        BLOCKED_USERS_STORAGE_KEY,
+        JSON.stringify(newBlocked)
+      );
+      console.log(`[Store] User unblocked: ${identifier}`);
+    } catch (error) {
+      console.error('[Store] Failed to persist blocked users:', error);
+    }
+  },
+
+  isUserBlocked: (identifier: string) => {
+    return get().blockedUsers.includes(identifier.toLowerCase());
+  },
+
+  loadBlockedUsers: async () => {
+    try {
+      const stored = await SecureStore.getItemAsync(BLOCKED_USERS_STORAGE_KEY);
+      if (stored) {
+        const blocked = JSON.parse(stored) as string[];
+        set({ blockedUsers: blocked });
+        console.log(`[Store] Loaded ${blocked.length} blocked users from storage`);
+      }
+    } catch (error) {
+      console.error('[Store] Failed to load blocked users:', error);
     }
   },
 }));

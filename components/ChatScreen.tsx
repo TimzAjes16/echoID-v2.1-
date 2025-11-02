@@ -42,7 +42,7 @@ interface ChatScreenProps {
 }
 
 export default function ChatScreen({ consent, visible, onClose }: ChatScreenProps) {
-  const { wallet, deviceKeypair, profile, themeMode } = useStore();
+  const { wallet, deviceKeypair, profile, themeMode, blockUser, unblockUser, isUserBlocked } = useStore();
   const storeState = useStore.getState();
   const systemColorScheme = useColorScheme();
   const colors = getThemeColors(themeMode, systemColorScheme);
@@ -59,6 +59,9 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
   const [paymentMode, setPaymentMode] = useState<'request' | 'send'>('request');
   const [paymentAmount, setPaymentAmount] = useState('');
   const flatListRef = useRef<FlatList>(null);
+  
+  // Check if counterparty is blocked
+  const isBlocked = isUserBlocked(consent.counterpartyHandle || consent.counterparty);
 
   useEffect(() => {
     if (visible) {
@@ -480,30 +483,54 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
     );
   }
 
-  function handleBlockUser() {
+  async function handleBlockUser() {
     setShowMenu(false);
-    Alert.alert(
-      'Block User',
-      `Block ${counterpartyName}? You will no longer receive messages from them.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Block',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              // In production, would store blocked users in SecureStore
-              Alert.alert('User Blocked', `${counterpartyName} has been blocked.`);
-              setShowMenu(false);
-              // Could close chat or show blocked state
-            } catch (error) {
-              console.error('[Chat] Failed to block user:', error);
-              Alert.alert('Error', 'Failed to block user');
+    
+    const isCurrentlyBlocked = isUserBlocked(consent.counterpartyHandle || consent.counterparty);
+    
+    if (isCurrentlyBlocked) {
+      Alert.alert(
+        'Unblock User',
+        `Unblock ${counterpartyName}?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Unblock',
+            onPress: async () => {
+              try {
+                await unblockUser(consent.counterpartyHandle || consent.counterparty);
+                Alert.alert('User Unblocked', `${counterpartyName} has been unblocked.`);
+              } catch (error) {
+                console.error('[Chat] Failed to unblock user:', error);
+                Alert.alert('Error', 'Failed to unblock user');
+              }
             }
           }
-        }
-      ]
-    );
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Block User',
+        `Block ${counterpartyName}? You will no longer receive messages from them.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Block',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await blockUser(consent.counterpartyHandle || consent.counterparty);
+                Alert.alert('User Blocked', `${counterpartyName} has been blocked.`);
+                onClose(); // Close chat after blocking
+              } catch (error) {
+                console.error('[Chat] Failed to block user:', error);
+                Alert.alert('Error', 'Failed to block user');
+              }
+            }
+          }
+        ]
+      );
+    }
   }
 
   function renderMessage({ item, index }: { item: Message; index: number }) {
@@ -663,8 +690,10 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
                   style={styles.menuItem}
                   onPress={handleBlockUser}
                 >
-                  <Ionicons name="ban-outline" size={20} color={colors.error} />
-                  <Text style={[styles.menuItemText, { color: colors.error }]}>Block User</Text>
+                  <Ionicons name={isBlocked ? "checkmark-circle-outline" : "ban-outline"} size={20} color={isBlocked ? colors.success || '#4CAF50' : colors.error} />
+                  <Text style={[styles.menuItemText, { color: isBlocked ? colors.success || '#4CAF50' : colors.error }]}>
+                    {isBlocked ? 'Unblock User' : 'Block User'}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -746,6 +775,36 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
             <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
               Setting up encrypted chat...
             </Text>
+          </View>
+        ) : isBlocked ? (
+          <View style={styles.blockedContainer}>
+            <Ionicons name="ban" size={64} color={colors.error} />
+            <Text style={[styles.blockedTitle, { color: colors.text }]}>
+              User Blocked
+            </Text>
+            <Text style={[styles.blockedText, { color: colors.textSecondary }]}>
+              You cannot send or receive messages from {counterpartyName}.
+            </Text>
+            <TouchableOpacity
+              style={[styles.unblockButton, { backgroundColor: colors.primary }]}
+              onPress={() => {
+                Alert.alert(
+                  'Unblock User',
+                  `Unblock ${counterpartyName}?`,
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Unblock',
+                      onPress: async () => {
+                        await unblockUser(consent.counterpartyHandle || consent.counterparty);
+                      }
+                    }
+                  ]
+                );
+              }}
+            >
+              <Text style={styles.unblockButtonText}>Unblock User</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <KeyboardAvoidingView
@@ -873,6 +932,33 @@ function createStyles(colors: any) {
     },
     loadingText: {
       fontSize: 14,
+    },
+    blockedContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 32,
+    },
+    blockedTitle: {
+      fontSize: 20,
+      fontWeight: '600',
+      marginTop: 16,
+      marginBottom: 8,
+    },
+    blockedText: {
+      fontSize: 14,
+      textAlign: 'center',
+      marginBottom: 24,
+    },
+    unblockButton: {
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      borderRadius: 8,
+    },
+    unblockButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '600',
     },
     dateSeparator: {
       alignItems: 'center',
