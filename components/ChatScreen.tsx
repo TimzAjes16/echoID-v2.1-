@@ -477,42 +477,46 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
             <Text style={styles.dateText}>{dayjs(item.timestamp).format('MMMM D, YYYY')}</Text>
           </View>
         )}
-        <View style={[
-          styles.messageRow,
-          isMe ? styles.myMessageRow : styles.theirMessageRow
-        ]}>
-          {!isMe && showAvatar && (
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {consent.counterpartyHandle?.[0]?.toUpperCase() || '?'}
+        {isMe ? (
+          <View style={[styles.messageRow, styles.myMessageRow]}>
+            <View style={[
+              styles.messageBubble,
+              styles.myBubble
+            ]}>
+              <Text style={[styles.messageText, styles.myMessageText]}>
+                {item.text}
+              </Text>
+              <Text style={[styles.messageTime, styles.myMessageTime]}>
+                {formatTime(item.timestamp)}
               </Text>
             </View>
-          )}
-          <View style={[
-            styles.messageBubble,
-            isMe ? styles.myBubble : styles.theirBubble
-          ]}>
-            <Text style={[
-              styles.messageText,
-              isMe ? styles.myMessageText : styles.theirMessageText
-            ]}>
-              {item.text}
-            </Text>
-            <Text style={[
-              styles.messageTime,
-              isMe ? styles.myMessageTime : styles.theirMessageTime
-            ]}>
-              {formatTime(item.timestamp)}
-            </Text>
+            {showAvatar && (
+              <View style={[styles.avatar, styles.myAvatar]}>
+                <Text style={styles.avatarText}>
+                  {profile?.handle?.[0]?.toUpperCase() || '?'}
+                </Text>
+              </View>
+            )}
           </View>
-          {isMe && showAvatar && (
-            <View style={[styles.avatar, styles.myAvatar]}>
-              <Text style={styles.avatarText}>
-                {profile?.handle?.[0]?.toUpperCase() || '?'}
+        ) : (
+          <View style={[styles.messageRow, styles.theirMessageRow]}>
+            {showAvatar && (
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {consent.counterpartyHandle?.[0]?.toUpperCase() || '?'}
+                </Text>
+              </View>
+            )}
+            <View style={[styles.messageBubble, styles.theirBubble]}>
+              <Text style={[styles.messageText, styles.theirMessageText]}>
+                {item.text}
+              </Text>
+              <Text style={[styles.messageTime, styles.theirMessageTime]}>
+                {formatTime(item.timestamp)}
               </Text>
             </View>
-          )}
-        </View>
+          </View>
+        )}
       </View>
     );
   }
