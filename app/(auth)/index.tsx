@@ -47,10 +47,22 @@ export default function AuthScreen() {
       // For MVP: if handle doesn't exist, claim it automatically
       // In production, you'd want to check first and prompt user
       
-      // Get device keypair
-      const keypair = await getDeviceKeypair();
-      const devicePubKeyStr = Array.from(keypair.publicKey, (byte) => String.fromCharCode(byte)).join('');
-      const devicePubKey = btoa(devicePubKeyStr);
+      // Check if this is a test user - if so, use their predefined devicePubKey
+      let devicePubKey: string;
+      const { isTestUser, getTestUser } = await import('../../lib/testUsers');
+      
+      if (isTestUser(handle)) {
+        // Use predefined pubkey for test users to ensure encryption works
+        const testUser = getTestUser(handle);
+        devicePubKey = testUser?.devicePubKey || '';
+        console.log('[Auth] Using predefined test user devicePubKey for:', handle);
+      } else {
+        // For real users, generate a random keypair
+        const keypair = await getDeviceKeypair();
+        const devicePubKeyStr = Array.from(keypair.publicKey, (byte) => String.fromCharCode(byte)).join('');
+        devicePubKey = btoa(devicePubKeyStr);
+        console.log('[Auth] Generated new devicePubKey for:', handle);
+      }
 
       // Get signature challenge
       let challenge: string;

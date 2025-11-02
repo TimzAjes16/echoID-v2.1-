@@ -193,6 +193,13 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
           const encryptedData = Uint8Array.from(JSON.parse(row.encrypted_data));
           const nonce = Uint8Array.from(JSON.parse(row.nonce));
           const decrypted = decryptBytes(encryptedData, sessionKey, nonce);
+          
+          // Check if decryption returned null
+          if (!decrypted) {
+            console.error('[Chat] Decryption returned null - invalid key or corrupted data');
+            continue;
+          }
+          
           const text = new TextDecoder().decode(decrypted);
           loadedMessages.push({
             id: row.id,
