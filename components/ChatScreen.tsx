@@ -17,6 +17,7 @@ import { Consent } from '../state/useStore';
 import { deriveChatKey, encryptBytes, decryptBytes } from '../lib/crypto';
 import { useStore } from '../state/useStore';
 import { resolveHandle } from '../lib/handles';
+import { getTestUserByAddress } from '../lib/testUsers';
 import { Ionicons } from '@expo/vector-icons';
 import { getThemeColors } from '../lib/theme';
 import dayjs from 'dayjs';
@@ -500,14 +501,27 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
 
   function renderMessage({ item, index }: { item: Message; index: number }) {
     const isMe = item.sender === wallet.address;
+    
+    // Debug: log all messages to understand who sent what
     if (!isMe) {
+      const testUserFromSender = getTestUserByAddress(item.sender);
       console.log('[Chat] DEBUG: renderMessage (from counterparty):', {
         sender: item.sender,
         walletAddress: wallet.address,
         messageText: item.text,
+        messageIndex: index,
         profileHandle: profile?.handle,
         counterPartyHandle: consent.counterpartyHandle,
-        counterPartyAddress: consent.counterparty
+        counterPartyAddress: consent.counterparty,
+        testUserFromSender: testUserFromSender?.handle || 'NONE'
+      });
+    } else {
+      console.log('[Chat] DEBUG: renderMessage (from me):', {
+        sender: item.sender,
+        walletAddress: wallet.address,
+        messageText: item.text,
+        messageIndex: index,
+        profileHandle: profile?.handle,
       });
     }
     const showAvatar = index === 0 || messages[index - 1].sender !== item.sender;

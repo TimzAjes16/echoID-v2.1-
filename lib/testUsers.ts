@@ -88,3 +88,16 @@ export function getTestUserBalanceByAddress(address: string, chainId: number = 8
   return testUser.balanceETH || '0';
 }
 
+/**
+ * Get test user by wallet address
+ * Returns the test user if the address belongs to one, otherwise null
+ */
+export function getTestUserByAddress(address: string): TestUser | null {
+  const addressLower = address.toLowerCase();
+  const testUser = TEST_USERS.find(
+    (u) => u.walletAddress.toLowerCase() === addressLower
+  );
+  
+  return testUser || null;
+}
+
