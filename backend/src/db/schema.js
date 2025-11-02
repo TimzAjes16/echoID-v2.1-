@@ -114,17 +114,17 @@ async function seedTestUsers(pool) {
   const testUsers = [
     {
       handle: 'sarah',
-      walletAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+      walletAddress: '0x408D2F87baF586bC3099Fe56F0C19e6A23F7275b',
       devicePubKey: 'N8Ayuv1NP2FtDchQnr/wszNXPd9tJlbpE3r4ye6l/kU=',
     },
     {
       handle: 'mike',
-      walletAddress: '0x8ba1f109551bD432803012645Hac136c808C817',
+      walletAddress: '0x8Bd195b826f8079eb5A18d3D6161466c0B5D75a8',
       devicePubKey: 'WukkTos1tmQTwHO2LDYc/KILh/0M7N1wzxX1wycxzzE=',
     },
     {
       handle: 'katie',
-      walletAddress: '0x9cA7a3B8F2D4e1F6a5B9C8D7E4F3A2B1C0D9E8F7',
+      walletAddress: '0x0EF2351b8D27E30E192928F6e80F7319e14BA136',
       devicePubKey: '4NNBWBq43Th23FCXuZgbN2Snjk7C+vRbnL5rWYqkREo=',
     },
   ];

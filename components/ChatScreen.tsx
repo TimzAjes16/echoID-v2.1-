@@ -502,31 +502,23 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
   function renderMessage({ item, index }: { item: Message; index: number }) {
     const isMe = item.sender === wallet.address;
     
-    // Debug: log all messages to understand who sent what
-    if (!isMe) {
-      const testUserFromSender = getTestUserByAddress(item.sender);
-      console.log('[Chat] DEBUG: renderMessage (from counterparty):', {
-        sender: item.sender,
-        walletAddress: wallet.address,
-        messageText: item.text,
-        messageIndex: index,
-        profileHandle: profile?.handle,
-        counterPartyHandle: consent.counterpartyHandle,
-        counterPartyAddress: consent.counterparty,
-        testUserFromSender: testUserFromSender?.handle || 'NONE'
-      });
-    } else {
-      console.log('[Chat] DEBUG: renderMessage (from me):', {
-        sender: item.sender,
-        walletAddress: wallet.address,
-        messageText: item.text,
-        messageIndex: index,
-        profileHandle: profile?.handle,
-      });
-    }
     const showAvatar = index === 0 || messages[index - 1].sender !== item.sender;
     const showDate = index === 0 || 
       (item.timestamp - messages[index - 1].timestamp) > 300000; // 5 minutes
+
+    // Determine avatar letter: either from test user lookup or fallback
+    let avatarLetter = '?';
+    if (isMe) {
+      avatarLetter = profile?.handle?.[0]?.toUpperCase() || '?';
+    } else {
+      // For counterparty messages, try to get their handle from their sender address
+      const testUserFromSender = getTestUserByAddress(item.sender);
+      if (testUserFromSender) {
+        avatarLetter = testUserFromSender.handle[0].toUpperCase();
+      } else if (consent.counterpartyHandle) {
+        avatarLetter = consent.counterpartyHandle[0].toUpperCase();
+      }
+    }
 
     return (
       <View key={item.id}>
@@ -551,7 +543,7 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
             {showAvatar && (
               <View style={[styles.avatar, styles.myAvatar]}>
                 <Text style={styles.avatarText}>
-                  {profile?.handle?.[0]?.toUpperCase() || '?'}
+                  {avatarLetter}
                 </Text>
               </View>
             )}
@@ -561,7 +553,7 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
             {showAvatar && (
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>
-                  {consent.counterpartyHandle?.[0]?.toUpperCase() || '?'}
+                  {avatarLetter}
                 </Text>
               </View>
             )}

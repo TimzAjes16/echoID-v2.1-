@@ -5,6 +5,7 @@ import { useStore } from '../../state/useStore';
 import { getSignatureChallenge, verifyHandleSignature, claimHandle } from '../../lib/handles';
 import { signMessageLocal } from '../../lib/wallet';
 import { getDeviceKeypair } from '../../lib/crypto';
+import * as SecureStore from 'expo-secure-store';
 
 export default function AuthScreen() {
   const { wallet, connectLocalWallet, loadWallet, loadProfile, profile, setProfile } = useStore();
@@ -33,9 +34,49 @@ export default function AuthScreen() {
     setIsLoading(true);
 
     try {
-      // Ensure we have a wallet
-      if (!wallet.address) {
-        await connectLocalWallet();
+      // Check if this is a test user - if so, we need to handle wallet differently
+      const { isTestUser, getTestUser } = await import('../../lib/testUsers');
+      const isUserTestUser = isTestUser(handle);
+      
+      if (isUserTestUser) {
+        // For test users, we need to use their predefined wallet address and private key
+        const testUser = getTestUser(handle);
+        console.log('[Auth] DEBUG: testUser retrieved:', { 
+          found: !!testUser, 
+          handle, 
+          hasWalletPrivateKey: !!testUser?.walletPrivateKey,
+          walletAddress: testUser?.walletAddress 
+        });
+        
+        if (!testUser) {
+          throw new Error(`Test user ${handle} not found`);
+        }
+        
+        if (!testUser.walletPrivateKey) {
+          console.error('[Auth] ERROR: walletPrivateKey missing for test user:', handle);
+          throw new Error(`Test user ${handle} missing walletPrivateKey`);
+        }
+        
+        // Store the test user's private key in SecureStore
+        await SecureStore.setItemAsync('local_wallet_private_key', testUser.walletPrivateKey);
+        
+        // Store the test user's wallet info in the store
+        useStore.setState((state) => ({
+          ...state,
+          wallet: {
+            session: null,
+            address: testUser.walletAddress as any,
+            chainId: 8453,
+            isLocal: true,
+          },
+        }));
+        
+        console.log('[Auth] Using predefined wallet for test user:', handle, testUser.walletAddress);
+      } else {
+        // For real users, create a normal wallet
+        if (!wallet.address) {
+          await connectLocalWallet();
+        }
       }
 
       const currentWallet = useStore.getState().wallet;
@@ -49,9 +90,8 @@ export default function AuthScreen() {
       
       // Check if this is a test user - if so, use their predefined devicePubKey
       let devicePubKey: string;
-      const { isTestUser, getTestUser } = await import('../../lib/testUsers');
       
-      if (isTestUser(handle)) {
+      if (isUserTestUser) {
         // Use predefined pubkey for test users to ensure encryption works
         const testUser = getTestUser(handle);
         devicePubKey = testUser?.devicePubKey || '';

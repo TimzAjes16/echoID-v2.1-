@@ -60,21 +60,21 @@ EchoID includes test users for testing consent requests and handle resolution.
 
 1. **Sarah**
    - Handle: `sarah`
-   - Wallet: `0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb`
+   - Wallet: `0x408D2F87baF586bC3099Fe56F0C19e6A23F7275b`
    - Balance: **0.1 ETH**
-   - Use: Test consent requests, handle resolution, accepting requests
+   - Use: Test consent requests, handle resolution, accepting requests, chat
 
 2. **Katie**
    - Handle: `katie`
-   - Wallet: `0x9cA7a3B8F2D4e1F6a5B9C8D7E4F3A2B1C0D9E8F7`
+   - Wallet: `0x0EF2351b8D27E30E192928F6e80F7319e14BA136`
    - Balance: **0.1 ETH**
-   - Use: Test consent requests, handle resolution, accepting requests
+   - Use: Test consent requests, handle resolution, accepting requests, chat
 
 3. **Mike**
    - Handle: `mike`
-   - Wallet: `0x8ba1f109551bD432803012645Hac136c22C19`
+   - Wallet: `0x8Bd195b826f8079eb5A18d3D6161466c0B5D75a8`
    - Balance: **0 ETH**
-   - Use: Test consent requests, handle resolution (insufficient balance for acceptance)
+   - Use: Test consent requests, handle resolution (insufficient balance for acceptance), chat
 
 ### Using Test Users
 
