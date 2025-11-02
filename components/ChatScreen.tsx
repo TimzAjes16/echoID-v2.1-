@@ -20,6 +20,7 @@ import { resolveHandle } from '../lib/handles';
 import { getTestUserByAddress } from '../lib/testUsers';
 import { Ionicons } from '@expo/vector-icons';
 import { getThemeColors } from '../lib/theme';
+import { sendChatMessageNotification } from '../lib/notifications';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -43,6 +44,7 @@ interface ChatScreenProps {
 
 export default function ChatScreen({ consent, visible, onClose }: ChatScreenProps) {
   const { wallet, deviceKeypair, profile, themeMode } = useStore();
+  const storeState = useStore.getState();
   const systemColorScheme = useColorScheme();
   const colors = getThemeColors(themeMode, systemColorScheme);
   const styles = createStyles(colors);
@@ -278,9 +280,33 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
       
       setMessages((prev) => [...prev, newMessage]);
       
-      // Note: Local notifications are only sent by the device receiving the message.
-      // In production with backend integration, we would send push notifications
-      // to the counterparty's device via Expo Push Notifications API.
+      // Send notification to counterparty if they're logged in (mock mode behavior)
+      try {
+        const { isTestUser } = await import('../lib/testUsers');
+        const counterpartyHandle = consent.counterpartyHandle?.toLowerCase();
+        const currentLoggedInHandle = storeState.profile?.handle?.trim().toLowerCase();
+        
+        // Only send notification if:
+        // 1. Counterparty handle exists
+        // 2. Counterparty is a test user OR they're the currently logged in user
+        // 3. The counterparty is NOT the sender
+        if (
+          counterpartyHandle &&
+          profile?.handle &&
+          counterpartyHandle !== profile.handle.toLowerCase() &&
+          (isTestUser(counterpartyHandle) || currentLoggedInHandle === counterpartyHandle)
+        ) {
+          await sendChatMessageNotification(
+            profile.handle,
+            textToSend,
+            consent.consentId.toString()
+          );
+          console.log(`[Chat] Notification sent to @${counterpartyHandle}`);
+        }
+      } catch (notifError) {
+        console.error('[Chat] Failed to send notification:', notifError);
+        // Don't fail the message send if notification fails
+      }
     } catch (error) {
       console.error('[Chat] Failed to send message:', error);
       setInputText(textToSend); // Restore text on error
