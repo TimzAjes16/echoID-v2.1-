@@ -265,6 +265,16 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
         timestamp: Date.now(),
         encrypted: true,
       };
+      
+      console.log('[Chat] DEBUG: sendMessage stored message:', {
+        messageId,
+        sender: newMessage.sender,
+        walletAddress: wallet.address,
+        profileHandle: profile?.handle,
+        text: textToSend,
+        consentId: consent.consentId.toString()
+      });
+      
       setMessages((prev) => [...prev, newMessage]);
     } catch (error) {
       console.error('[Chat] Failed to send message:', error);
@@ -490,13 +500,16 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
 
   function renderMessage({ item, index }: { item: Message; index: number }) {
     const isMe = item.sender === wallet.address;
-    console.log('[Chat] DEBUG: renderMessage:', {
-      sender: item.sender,
-      walletAddress: wallet.address,
-      isMe,
-      profileHandle: profile?.handle,
-      counterPartyHandle: consent.counterpartyHandle
-    });
+    if (!isMe) {
+      console.log('[Chat] DEBUG: renderMessage (from counterparty):', {
+        sender: item.sender,
+        walletAddress: wallet.address,
+        messageText: item.text,
+        profileHandle: profile?.handle,
+        counterPartyHandle: consent.counterpartyHandle,
+        counterPartyAddress: consent.counterparty
+      });
+    }
     const showAvatar = index === 0 || messages[index - 1].sender !== item.sender;
     const showDate = index === 0 || 
       (item.timestamp - messages[index - 1].timestamp) > 300000; // 5 minutes
