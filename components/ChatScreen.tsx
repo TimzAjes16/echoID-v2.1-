@@ -490,6 +490,13 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
 
   function renderMessage({ item, index }: { item: Message; index: number }) {
     const isMe = item.sender === wallet.address;
+    console.log('[Chat] DEBUG: renderMessage:', {
+      sender: item.sender,
+      walletAddress: wallet.address,
+      isMe,
+      profileHandle: profile?.handle,
+      counterPartyHandle: consent.counterpartyHandle
+    });
     const showAvatar = index === 0 || messages[index - 1].sender !== item.sender;
     const showDate = index === 0 || 
       (item.timestamp - messages[index - 1].timestamp) > 300000; // 5 minutes
