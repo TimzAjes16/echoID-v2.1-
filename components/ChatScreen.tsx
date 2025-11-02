@@ -129,11 +129,15 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
         myDevicePubKey[i] = binaryString.charCodeAt(i);
       }
 
+      console.log('[Chat] DEBUG: My pubkey decoded, length:', myDevicePubKey.length);
+      console.log('[Chat] DEBUG: My pubkey first bytes:', Array.from(myDevicePubKey.slice(0, 8)));
+
       // Get counterparty device pubkey from handle
       let counterpartyPubKey: Uint8Array | null = null;
       
       if (consent.counterpartyHandle) {
         const mapping = await resolveHandle(consent.counterpartyHandle);
+        console.log('[Chat] DEBUG: Resolved mapping:', mapping?.handle, 'has pubkey:', !!mapping?.devicePubKey);
         if (mapping?.devicePubKey) {
           // Decode base64 devicePubKey to Uint8Array
           const binaryString = atob(mapping.devicePubKey);
@@ -141,6 +145,8 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
           for (let i = 0; i < binaryString.length; i++) {
             counterpartyPubKey[i] = binaryString.charCodeAt(i);
           }
+          console.log('[Chat] DEBUG: Counterparty pubkey decoded, length:', counterpartyPubKey.length);
+          console.log('[Chat] DEBUG: Counterparty pubkey first bytes:', Array.from(counterpartyPubKey.slice(0, 8)));
         }
       }
 
@@ -165,6 +171,10 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
         counterpartyPubKey,
         consent.id
       );
+      
+      console.log('[Chat] DEBUG: Session key derived, first 8 bytes:', Array.from(key.slice(0, 8)));
+      console.log('[Chat] DEBUG: Consent ID used:', consent.id);
+      
       setSessionKey(key);
       console.log('[Chat] Session key derived successfully');
     } catch (error) {
@@ -192,6 +202,12 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
           // Check if decryption returned null
           if (!decrypted) {
             console.error('[Chat] Decryption returned null - invalid key or corrupted data');
+            console.error('[Chat] DEBUG: Message ID:', row.id);
+            console.error('[Chat] DEBUG: Encrypted data length:', encryptedData.length);
+            console.error('[Chat] DEBUG: Nonce length:', nonce.length);
+            console.error('[Chat] DEBUG: Session key length:', sessionKey?.length);
+            console.error('[Chat] DEBUG: Encrypted data first 8 bytes:', Array.from(encryptedData.slice(0, 8)));
+            console.error('[Chat] DEBUG: Nonce first 8 bytes:', Array.from(nonce.slice(0, 8)));
             continue;
           }
           
