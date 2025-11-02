@@ -157,7 +157,7 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
         const addressBytes = new TextEncoder().encode(consent.counterparty);
         const combined = new Uint8Array([
           ...addressBytes,
-          ...new TextEncoder().encode(consent.id),
+          ...new TextEncoder().encode(consent.consentId.toString()),
         ]);
         const hash = new Uint8Array(32);
         for (let i = 0; i < Math.min(combined.length, 32); i++) {
@@ -166,14 +166,19 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
         counterpartyPubKey = hash;
       }
 
+      // Use consent.consentId (bigint) instead of consent.id (string) for session key
+      // This ensures both parties derive the same key since they share the same on-chain consentId
+      const consentIdString = consent.consentId.toString();
+      
       const key = deriveChatKey(
         myDevicePubKey,
         counterpartyPubKey,
-        consent.id
+        consentIdString
       );
       
       console.log('[Chat] DEBUG: Session key derived, first 8 bytes:', Array.from(key.slice(0, 8)));
-      console.log('[Chat] DEBUG: Consent ID used:', consent.id);
+      console.log('[Chat] DEBUG: Consent ID used (consentId.toString()):', consentIdString);
+      console.log('[Chat] DEBUG: consent.id (for DB storage):', consent.id);
       
       setSessionKey(key);
       console.log('[Chat] Session key derived successfully');
@@ -187,9 +192,10 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
     if (!database || !sessionKey) return;
     
     try {
+      // Use consent.consentId.toString() for querying so both parties see the same messages
       const result = await database.getAllAsync(
         'SELECT * FROM messages WHERE consent_id = ? ORDER BY timestamp ASC',
-        [consent.id]
+        [consent.consentId.toString()] // Use consentId instead of consent.id
       );
       
       const loadedMessages: Message[] = [];
@@ -244,7 +250,7 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
         'INSERT INTO messages (id, consent_id, sender, encrypted_data, nonce, timestamp) VALUES (?, ?, ?, ?, ?, ?)',
         [
           messageId,
-          consent.id,
+          consent.consentId.toString(),
           wallet.address,
           JSON.stringify(Array.from(ciphertext)),
           JSON.stringify(Array.from(nonce)),
@@ -361,7 +367,7 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
         'INSERT INTO messages (id, consent_id, sender, encrypted_data, nonce, timestamp) VALUES (?, ?, ?, ?, ?, ?)',
         [
           messageId,
-          consent.id,
+          consent.consentId.toString(),
           wallet.address,
           JSON.stringify(Array.from(ciphertext)),
           JSON.stringify(Array.from(nonce)),
@@ -406,7 +412,7 @@ export default function ChatScreen({ consent, visible, onClose }: ChatScreenProp
           onPress: async () => {
             try {
               if (!db) return;
-              await db.runAsync('DELETE FROM messages WHERE consent_id = ?', [consent.id]);
+              await db.runAsync('DELETE FROM messages WHERE consent_id = ?', [consent.consentId.toString()]);
               setMessages([]);
               Alert.alert('Chat Cleared', 'All messages have been deleted');
             } catch (error) {
